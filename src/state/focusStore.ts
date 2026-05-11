@@ -10,6 +10,15 @@ type Flags = {
   distractionsBlocked: boolean;
 };
 
+export type DailyPlan = {
+  projectId: string;
+  projectName: string;
+  primaryTask: string;
+  secondaryTask?: string;
+  plannedDurationMin: number;
+  createdAt: number;
+};
+
 type FocusState = {
   status: SessionStatus;
   project: string;
@@ -22,6 +31,7 @@ type FocusState = {
   xp: number;
   focusStreakDays: number;
   projectStreakDays: number;
+  dailyPlan: DailyPlan | null;
 };
 
 type FocusActions = {
@@ -35,6 +45,8 @@ type FocusActions = {
   setXp: (xp: number) => void;
   setFocusStreak: (days: number) => void;
   setProjectStreak: (days: number) => void;
+  setDailyPlan: (plan: DailyPlan) => void;
+  clearDailyPlan: () => void;
 };
 
 export type FocusStore = FocusState & FocusActions;
@@ -55,6 +67,7 @@ export const useFocusStore = create<FocusStore>((set) => ({
   xp: 1250,
   focusStreakDays: 14,
   projectStreakDays: 7,
+  dailyPlan: null,
 
   start: () =>
     set((s) => ({ status: "running", remainingSec: s.durationSec })),
@@ -77,4 +90,20 @@ export const useFocusStore = create<FocusStore>((set) => ({
   setXp: (xp) => set({ xp }),
   setFocusStreak: (days) => set({ focusStreakDays: days }),
   setProjectStreak: (days) => set({ projectStreakDays: days }),
+
+  setDailyPlan: (plan) =>
+    set((s) => {
+      const newDurationSec = plan.plannedDurationMin * 60;
+      return {
+        dailyPlan: plan,
+        project: plan.projectName,
+        task: plan.primaryTask,
+        durationSec: newDurationSec,
+        remainingSec:
+          s.status === "running" || s.status === "paused"
+            ? s.remainingSec
+            : newDurationSec,
+      };
+    }),
+  clearDailyPlan: () => set({ dailyPlan: null }),
 }));
