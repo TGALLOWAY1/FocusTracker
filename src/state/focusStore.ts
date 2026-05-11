@@ -20,6 +20,8 @@ type FocusState = {
   flags: Flags;
   currentTierId: number;
   xp: number;
+  focusStreakDays: number;
+  projectStreakDays: number;
 };
 
 type FocusActions = {
@@ -31,6 +33,8 @@ type FocusActions = {
   setDuration: (sec: number) => void;
   setTier: (tierId: number) => void;
   setXp: (xp: number) => void;
+  setFocusStreak: (days: number) => void;
+  setProjectStreak: (days: number) => void;
 };
 
 export type FocusStore = FocusState & FocusActions;
@@ -49,6 +53,8 @@ export const useFocusStore = create<FocusStore>((set) => ({
   },
   currentTierId: 3,
   xp: 1250,
+  focusStreakDays: 14,
+  projectStreakDays: 7,
 
   start: () =>
     set((s) => ({ status: "running", remainingSec: s.durationSec })),
@@ -69,4 +75,6 @@ export const useFocusStore = create<FocusStore>((set) => ({
   setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
   setTier: (tierId) => set({ currentTierId: tierId }),
   setXp: (xp) => set({ xp }),
+  setFocusStreak: (days) => set({ focusStreakDays: days }),
+  setProjectStreak: (days) => set({ projectStreakDays: days }),
 }));

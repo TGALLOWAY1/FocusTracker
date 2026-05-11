@@ -1,6 +1,10 @@
 import { ChevronRight, Flame, Target, Star } from "lucide-react";
 import { NAV_ITEMS, ACTIVE_NAV_ID } from "../../data/navItems";
 import { Card } from "../ui/Card";
+import { useFocusStore } from "../../state/focusStore";
+import { FOCUS_TIERS, getTier } from "../../data/focusTiers";
+import { WEEK_STATS } from "../../data/focusStats";
+import { clamp } from "../../utils/time";
 
 function FocusLadderLogo() {
   return (
@@ -94,6 +98,17 @@ function MountainMark() {
 }
 
 function FocusTierCard() {
+  const currentTierId = useFocusStore((s) => s.currentTierId);
+  const xp = useFocusStore((s) => s.xp);
+
+  const tier = getTier(currentTierId);
+  const nextTier = FOCUS_TIERS.find((t) => t.id === currentTierId + 1);
+
+  if (!tier) return null;
+
+  const hasFiniteGoal = Number.isFinite(tier.xpToNext);
+  const xpProgress = hasFiniteGoal ? clamp(xp / tier.xpToNext, 0, 1) : 1;
+
   return (
     <Card className="relative overflow-hidden">
       <div className="flex items-start justify-between gap-2">
@@ -102,9 +117,13 @@ function FocusTierCard() {
             Focus Tier
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-2xl font-semibold text-brand-purple">Tier 3</span>
+            <span className="text-2xl font-semibold text-brand-purple">
+              {tier.label}
+            </span>
           </div>
-          <div className="text-xs text-text-secondary mt-0.5">35 min sessions</div>
+          <div className="text-xs text-text-secondary mt-0.5">
+            {tier.durationLabel} sessions
+          </div>
         </div>
         <div className="-mr-2 -mt-1">
           <MountainMark />
@@ -114,15 +133,20 @@ function FocusTierCard() {
       <div className="mt-4">
         <div className="h-1.5 w-full rounded-full bg-bg-elevated overflow-hidden">
           <div
-            className="h-full rounded-full bg-gradient-to-r from-brand-purple to-accent-green"
-            style={{ width: "62.5%" }}
+            className="h-full rounded-full bg-gradient-to-r from-brand-purple to-accent-green transition-[width] duration-500"
+            style={{ width: `${xpProgress * 100}%` }}
           />
         </div>
-        <div className="mt-2 flex items-center justify-between text-[11px] text-text-secondary">
-          <span>1,250 / 2,000 XP</span>
+        <div className="mt-2 flex items-center justify-between text-[11px] text-text-secondary tabular-nums">
+          <span>
+            {xp.toLocaleString()} /{" "}
+            {hasFiniteGoal ? tier.xpToNext.toLocaleString() : "∞"} XP
+          </span>
         </div>
         <div className="mt-1 text-[11px] text-text-muted">
-          Next Tier: 50 min sessions
+          {nextTier
+            ? `Next Tier: ${nextTier.durationLabel} sessions`
+            : "Peak tier reached"}
         </div>
       </div>
     </Card>
@@ -160,6 +184,10 @@ function StreakRow({ value, unit, label, iconBg, iconColor, Icon }: StreakRowPro
 }
 
 function StreaksCard() {
+  const focusStreakDays = useFocusStore((s) => s.focusStreakDays);
+  const projectStreakDays = useFocusStore((s) => s.projectStreakDays);
+  const deepWorkHours = Math.floor(WEEK_STATS.totalMinutes / 60);
+
   return (
     <Card>
       <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium mb-4">
@@ -167,7 +195,7 @@ function StreaksCard() {
       </div>
       <div className="flex flex-col gap-3">
         <StreakRow
-          value="14"
+          value={String(focusStreakDays)}
           unit="Days"
           label="Focus Streak"
           Icon={Flame}
@@ -175,7 +203,7 @@ function StreaksCard() {
           iconColor="text-accent-green"
         />
         <StreakRow
-          value="7"
+          value={String(projectStreakDays)}
           unit="Days"
           label="Project Streak"
           Icon={Target}
@@ -183,7 +211,7 @@ function StreaksCard() {
           iconColor="text-brand-purple"
         />
         <StreakRow
-          value="18"
+          value={String(deepWorkHours)}
           unit="Hours"
           label="Deep Work This Week"
           Icon={Star}
