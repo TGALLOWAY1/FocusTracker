@@ -116,17 +116,7 @@ export function FocusLadderPanel() {
 
   return (
     <Card>
-      <CardHeader
-        title="Focus Ladder"
-        trailing={
-          <button
-            type="button"
-            className="text-xs font-medium text-brand-purple hover:text-brand-purple/80 transition-colors"
-          >
-            View All
-          </button>
-        }
-      />
+      <CardHeader title="Focus Ladder" />
       <ul className="mt-3 flex flex-col gap-1">
         {FOCUS_TIERS.map((tier) => {
           const status = tierStatus(tier.id, currentTierId);

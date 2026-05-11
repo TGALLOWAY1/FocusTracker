@@ -1,6 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import { Card, CardHeader } from "../ui/Card";
-import { WEEK_STATS, type DayStat, type FocusStatsData } from "../../data/focusStats";
+import type { DayStat, FocusStatsData } from "../../data/focusStats";
 import { formatHM } from "../../utils/time";
 
 type StatProps = {
@@ -122,11 +122,14 @@ function RangeIndicator() {
 }
 
 type FocusStatsPanelProps = {
-  data?: FocusStatsData;
+  data: FocusStatsData;
 };
 
-export function FocusStatsPanel({ data = WEEK_STATS }: FocusStatsPanelProps) {
-  const completionPct = Math.round(data.completionRate * 100);
+export function FocusStatsPanel({ data }: FocusStatsPanelProps) {
+  const isEmpty = data.sessionCount === 0;
+  const completionLabel = isEmpty
+    ? "—"
+    : `${Math.round(data.completionRate * 100)}%`;
 
   return (
     <Card>
@@ -144,7 +147,7 @@ export function FocusStatsPanel({ data = WEEK_STATS }: FocusStatsPanelProps) {
           valueClass="text-brand-purple"
         />
         <Stat
-          value={`${completionPct}%`}
+          value={completionLabel}
           label="Completion Rate"
           valueClass="text-accent-yellow"
         />

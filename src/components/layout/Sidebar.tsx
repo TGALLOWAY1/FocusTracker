@@ -2,8 +2,8 @@ import { ChevronRight, Flame, Target, Star } from "lucide-react";
 import { NAV_ITEMS, ACTIVE_NAV_ID } from "../../data/navItems";
 import { Card } from "../ui/Card";
 import { useFocusStore } from "../../state/focusStore";
+import { useWeeklyStats } from "../../state/useWeeklyStats";
 import { FOCUS_TIERS, getTier } from "../../data/focusTiers";
-import { WEEK_STATS } from "../../data/focusStats";
 import { clamp } from "../../utils/time";
 
 function FocusLadderLogo() {
@@ -186,7 +186,8 @@ function StreakRow({ value, unit, label, iconBg, iconColor, Icon }: StreakRowPro
 function StreaksCard() {
   const focusStreakDays = useFocusStore((s) => s.focusStreakDays);
   const projectStreakDays = useFocusStore((s) => s.projectStreakDays);
-  const deepWorkHours = Math.floor(WEEK_STATS.totalMinutes / 60);
+  const weeklyStats = useWeeklyStats();
+  const deepWorkHours = Math.floor(weeklyStats.totalMinutes / 60);
 
   return (
     <Card>
