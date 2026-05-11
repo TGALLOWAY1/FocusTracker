@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { newId } from "../utils/id";
 
 export const IDEA_STATUSES = ["Future Idea", "Maybe Later", "Incubating"] as const;
 export type IdeaStatus = (typeof IDEA_STATUSES)[number];
@@ -11,17 +12,6 @@ export type Idea = {
 };
 
 const HOUR = 1000 * 60 * 60;
-
-function newId(): string {
-  const cryptoObj =
-    typeof globalThis !== "undefined" ? (globalThis.crypto ?? null) : null;
-  if (cryptoObj && typeof cryptoObj.randomUUID === "function") {
-    return cryptoObj.randomUUID();
-  }
-  return `idea-${Date.now().toString(36)}-${Math.random()
-    .toString(36)
-    .slice(2, 8)}`;
-}
 
 const NOW = Date.now();
 const SEED: Idea[] = [
@@ -58,7 +48,7 @@ export const useIdeaStore = create<IdeaStore>((set) => ({
     if (!trimmed) return;
     set((s) => ({
       ideas: [
-        { id: newId(), text: trimmed, status, createdAt: Date.now() },
+        { id: newId("idea"), text: trimmed, status, createdAt: Date.now() },
         ...s.ideas,
       ],
     }));

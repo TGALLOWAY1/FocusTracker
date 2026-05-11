@@ -3,6 +3,7 @@ import { Sunrise, Sparkles } from "lucide-react";
 import { FocusSessionCard } from "../dashboard/FocusSessionCard";
 import { IdeaParkingLot } from "../dashboard/IdeaParkingLot";
 import { PlanMyDayModal } from "../dashboard/PlanMyDayModal";
+import { SessionReflectionModal } from "../dashboard/SessionReflectionModal";
 
 function Greeting({ onPlan }: { onPlan: () => void }) {
   return (
@@ -42,6 +43,7 @@ export function MainContent() {
       <FocusSessionCard />
       <IdeaParkingLot />
       <PlanMyDayModal open={planOpen} onClose={() => setPlanOpen(false)} />
+      <SessionReflectionModal />
     </main>
   );
 }
