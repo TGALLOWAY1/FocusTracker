@@ -32,7 +32,7 @@ export const Card = forwardRef<HTMLElement, CardProps>(function Card(
 });
 
 type CardHeaderProps = {
-  title: string;
+  title: ReactNode;
   trailing?: ReactNode;
   subtitle?: string;
   className?: string;

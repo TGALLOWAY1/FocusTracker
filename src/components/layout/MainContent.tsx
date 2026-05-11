@@ -1,6 +1,6 @@
 import { Sunrise, Sparkles } from "lucide-react";
-import { Card, CardHeader } from "../ui/Card";
 import { FocusSessionCard } from "../dashboard/FocusSessionCard";
+import { IdeaParkingLot } from "../dashboard/IdeaParkingLot";
 
 function Greeting() {
   return (
@@ -33,50 +33,12 @@ function Greeting() {
   );
 }
 
-function PhasePlaceholder({
-  title,
-  trailing,
-  phase,
-  minHeight = 220,
-}: {
-  title: string;
-  trailing?: string;
-  phase: string;
-  minHeight?: number;
-}) {
-  return (
-    <Card>
-      <CardHeader
-        title={title}
-        trailing={
-          trailing ? (
-            <span className="text-xs text-text-muted">{trailing}</span>
-          ) : undefined
-        }
-      />
-      <div
-        className="mt-4 rounded-xl border border-dashed border-border-subtle bg-bg-base/40 flex items-center justify-center text-xs text-text-muted"
-        style={{ minHeight }}
-      >
-        {phase}
-      </div>
-    </Card>
-  );
-}
-
 export function MainContent() {
   return (
     <main className="flex flex-col gap-5 p-6 min-w-0 overflow-y-auto scrollbar-thin">
       <Greeting />
-
       <FocusSessionCard />
-
-      <PhasePlaceholder
-        title="Idea Parking Lot"
-        trailing="Add Idea"
-        phase="Capture flow arrives in Phase 5"
-        minHeight={140}
-      />
+      <IdeaParkingLot />
     </main>
   );
 }
