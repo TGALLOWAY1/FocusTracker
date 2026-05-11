@@ -8,7 +8,7 @@ These are constraints the implementation currently bakes in. Any of them can be 
 - **Persistence is browser `localStorage` only.** Three keys: `focus-ladder.focus`, `focus-ladder.ideas`, `focus-ladder.projects`. Clearing site data resets everything.
 - **No schema migration.** All three Zustand stores set `version: 1` but no `migrate` function is defined. Any change to persisted shape silently merges old data, which may produce stale or broken fields.
 - **Seed data only on first load.** `ideaStore` seeds 3 ideas with relative `createdAt` timestamps (Now − 2h / 26h / 50h, so the relative-date display reads "Today / Yesterday / 2d ago"). `projectStore` seeds 3 projects (Harmonia EP / Machine Learning Path / Synapse). `focusStore` seeds tier 3, 1250 XP, focus streak 14, project streak 7. These are demo defaults, not real user state.
-- **Stats are demo data.** `WEEK_STATS` in `src/data/focusStats.ts` is hardcoded. `FocusStatsPanel` reads from this constant, not from completed sessions. Tracked in `FEATURE_STATUS.md` and `BACKLOG.md`.
+- **Stats are derived from `sessionLog`.** `bucketWeeklyStats` in `src/state/useWeeklyStats.ts` buckets the current Mon–Sun in local TZ. Empty `sessionLog` produces honest zeros (no demo fallback). Completion rate = `completedNaturally / total`.
 - **Local timezone, no DST handling.** Relative dates (`utils/date.ts`) and any weekly bucketing happen in the user's local time.
 
 ## Identity and Personalization
@@ -23,7 +23,8 @@ These are constraints the implementation currently bakes in. Any of them can be 
 - **Default session length is 35 minutes** (`focusStore.ts:7`). Override via the Plan-My-Day modal (which writes `durationSec` from `plannedDurationMin * 60`).
 - **Break is always "Short Break 5 min"** (`focusStore.ts:122`). No long-break logic, no automatic transition to the break.
 - **Tier ladder is fixed at 6 tiers.** 10/20/35/50/75/90+ minutes, with hardcoded XP thresholds. Not customizable in-app.
-- **Tier does not auto-advance.** XP isn't awarded by any action today; `currentTierId` is only changed via `setTier()`, which no UI calls. Both gaps tracked in BACKLOG (#4).
+- **XP policy.** `xpForSession` = `min(60, mins) + 3 × max(0, mins − 60) + (completedNaturally ? 5 : 0)`. First hour earns 1 XP/min; minutes past 60 earn 3 XP/min (deep-work multiplier). Natural completion adds a flat +5 bonus. Awarded on both `submitReflection` and `dismissReflection` — skipping reflection is not a forfeit.
+- **Tier auto-advance.** `applyXpAward` rolls overflow XP into the next tier when `xp ≥ tier.xpToNext`. Tier 6 (`xpToNext = Infinity`) accumulates without advancing.
 - **Status flags are visual only.** "Focus Mode On", "Notifications Muted", "Distractions Blocked" (`FocusSessionCard.tsx:170-194`) reflect store flags but the app does not actually mute notifications, block sites, or change OS focus state.
 - **Refresh mid-session resets to idle.** Intentional, via `focusStore.merge` (see `IMPLEMENTATION_AUDIT.md`). Users will lose an in-progress timer if they refresh — but they will not accidentally resume a stale one.
 

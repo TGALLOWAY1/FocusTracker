@@ -1,10 +1,15 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { newId } from "../utils/id";
+import { getTier } from "../data/focusTiers";
 
 export type SessionStatus = "idle" | "running" | "paused";
 
 const DEFAULT_DURATION_SEC = 35 * 60;
+
+const DEEP_WORK_THRESHOLD_MIN = 60;
+const DEEP_WORK_MULTIPLIER = 3;
+const NATURAL_COMPLETION_BONUS = 5;
 
 type Flags = {
   focusMode: boolean;
@@ -68,6 +73,7 @@ type FocusActions = {
   resume: () => void;
   end: () => void;
   tick: () => void;
+  setProject: (name: string) => void;
   setDuration: (sec: number) => void;
   setTier: (tierId: number) => void;
   setXp: (xp: number) => void;
@@ -97,6 +103,38 @@ function buildCompletion(
   };
 }
 
+// First DEEP_WORK_THRESHOLD_MIN minutes earn 1 XP/min; minutes past the
+// threshold earn DEEP_WORK_MULTIPLIER× — rewards sustained focus. Natural
+// completion adds a flat bonus so finishing the timer matters.
+export function xpForSession(session: CompletedSession): number {
+  const mins = Math.floor(session.actualDurationSec / 60);
+  const baseMins = Math.min(DEEP_WORK_THRESHOLD_MIN, mins);
+  const deepMins = Math.max(0, mins - DEEP_WORK_THRESHOLD_MIN);
+  const fromTime = baseMins + deepMins * DEEP_WORK_MULTIPLIER;
+  return fromTime + (session.completedNaturally ? NATURAL_COMPLETION_BONUS : 0);
+}
+
+// Adds `award` XP and walks the tier ladder forward, rolling overflow into
+// the next tier. Stops once the current tier's xpToNext is unmet, or the
+// peak tier is reached (xpToNext = Infinity).
+export function applyXpAward(
+  currentTierId: number,
+  xp: number,
+  award: number
+): { currentTierId: number; xp: number } {
+  let tierId = currentTierId;
+  let total = xp + award;
+  while (true) {
+    const tier = getTier(tierId);
+    if (!tier || !Number.isFinite(tier.xpToNext) || total < tier.xpToNext) {
+      break;
+    }
+    total -= tier.xpToNext;
+    tierId += 1;
+  }
+  return { currentTierId: tierId, xp: total };
+}
+
 type PersistedFocus = Pick<
   FocusState,
   | "project"
@@ -114,7 +152,7 @@ type PersistedFocus = Pick<
 export const useFocusStore = create<FocusStore>()(
   persist(
     (set) => ({
-      status: "running" as SessionStatus,
+      status: "idle" as SessionStatus,
       project: "Harmonia EP",
       task: "Mixing and arrangement",
       durationSec: DEFAULT_DURATION_SEC,
@@ -125,10 +163,10 @@ export const useFocusStore = create<FocusStore>()(
         notificationsMuted: true,
         distractionsBlocked: true,
       },
-      currentTierId: 3,
-      xp: 1250,
-      focusStreakDays: 14,
-      projectStreakDays: 7,
+      currentTierId: 1,
+      xp: 0,
+      focusStreakDays: 0,
+      projectStreakDays: 0,
       dailyPlan: null,
       pendingReflectionFor: null,
       sessionLog: [],
@@ -158,6 +196,7 @@ export const useFocusStore = create<FocusStore>()(
           return { remainingSec: s.remainingSec - 1 };
         }),
 
+      setProject: (name) => set({ project: name }),
       setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
       setTier: (tierId) => set({ currentTierId: tierId }),
       setXp: (xp) => set({ xp }),
@@ -183,8 +222,12 @@ export const useFocusStore = create<FocusStore>()(
       submitReflection: (reflection) =>
         set((s) => {
           if (!s.pendingReflectionFor) return s;
+          const award = xpForSession(s.pendingReflectionFor);
+          const next = applyXpAward(s.currentTierId, s.xp, award);
           return {
             pendingReflectionFor: null,
+            currentTierId: next.currentTierId,
+            xp: next.xp,
             sessionLog: [
               { session: s.pendingReflectionFor, reflection },
               ...s.sessionLog,
@@ -195,8 +238,12 @@ export const useFocusStore = create<FocusStore>()(
       dismissReflection: () =>
         set((s) => {
           if (!s.pendingReflectionFor) return s;
+          const award = xpForSession(s.pendingReflectionFor);
+          const next = applyXpAward(s.currentTierId, s.xp, award);
           return {
             pendingReflectionFor: null,
+            currentTierId: next.currentTierId,
+            xp: next.xp,
             sessionLog: [
               { session: s.pendingReflectionFor, reflection: null },
               ...s.sessionLog,

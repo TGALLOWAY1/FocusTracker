@@ -4,40 +4,19 @@ Items below are ordered by priority. Each lists why it matters and what "done" l
 
 ## P0 — Must Fix Before Continuing
 
-### 1. Derive Focus Stats from `sessionLog`
-**Why:** Completing a real session today doesn't change anything in the right column. The bar chart, totals, sessions count, and completion rate all read from a hardcoded constant (`data/focusStats.ts:14-28`). Users who complete sessions will believe the product is broken.
+### 1. Derive Focus Stats from `sessionLog` ✅ Done (Slice 1)
+Implemented via `src/state/useWeeklyStats.ts` (pure `bucketWeeklyStats` + thin hook). `RightPanel` and `Sidebar` both consume it. `WEEK_STATS` deleted. Empty state renders zeros + "—" for completion rate.
 
-**Acceptance**
-- A `useWeeklyStats()` hook (or selector) in `src/state/` reads `focusStore.sessionLog` and returns a `FocusStatsData` for the last 7 calendar days (Mon–Sun in local TZ).
-- `RightPanel.tsx` passes that into `<FocusStatsPanel data={…} />`.
-- `WEEK_STATS` becomes the empty-state fallback when `sessionLog` is empty (or is deleted entirely if seeded data is undesirable).
-- A session ended today shows up in today's bar within 1 second.
+### 2. Make Active Project cards clickable ✅ Done (Slice 1)
+Rows are now `<button>` elements that call `focusStore.setProject(name)` and smooth-scroll to `#focus-session-card`. Lying "Manage" span removed.
 
-### 2. Make Active Project cards clickable
-**Why:** The mockup and the surrounding product reads as if projects are pickable. They render with hover styles and a ring, but clicking does nothing (`ActiveProjectsPanel.tsx:11-50`). Either the cards are interactive or they're a status list — right now they're both, which is worse than either.
-
-**Acceptance**
-- Clicking a row calls a single store action that sets the focus session's project (project name + optionally project id) and brings the timer into view (scroll, focus, or both).
-- Cursor + hover + focus styles communicate interactivity.
-- "Manage" is either removed or becomes a real button that opens a project-edit modal.
-
-### 3. Decide nav: route or remove
-**Why:** Seven nav items in the sidebar plus four in the bottom bar all look clickable, but `cursor-default` and no `onClick` mean nothing happens. Users will click "Focus Sessions" or "Insights" expecting another view. Either ship the views or visually demote the nav so it doesn't lie.
-
-**Acceptance**
-- Either: introduce a minimal in-app view switcher (no router needed — a `currentView` in a UI store + conditional render in `MainContent`) so at least one nav item leads somewhere. **Or:** remove the nav rendering entirely from Sidebar/BottomBar until the views exist, leaving only the Today affordance + logo.
-- "View All" (`FocusLadderPanel.tsx`) and "Manage" (`ActiveProjectsPanel.tsx`) get the same treatment (wire or remove).
-- The disabled Quick Add FAB (`BottomBar.tsx:48-56`) either gets a handler or is visually demoted.
+### 3. Decide nav: route or remove — **Partially Done**
+"View All" (FocusLadderPanel) removed. "Manage" (ActiveProjectsPanel) removed. Quick Add FAB remains visibly disabled with `disabled` + `cursor-not-allowed` + tooltip — acceptable as "intentionally inactive". **Still open:** the seven Sidebar nav items and four BottomBar items remain decorative — deferred to NEXT_STEPS Slice 2.
 
 ## P1 — Core Product Completion
 
-### 4. Tier auto-progression
-**Why:** XP accumulates from completed sessions (once XP-awarding is wired) but `currentTierId` never increments. The ladder is the product's namesake; it has to actually advance.
-
-**Acceptance**
-- `submitReflection` (and/or `tick()` on natural completion) awards XP based on `actualDurationSec` and the planned tier.
-- When `xp >= tier.xpToNext`, `currentTierId` advances by 1 and `xp` rolls over (or resets — see `OPEN_QUESTIONS.md`).
-- The change is visible in the sidebar tier card and the right-panel ladder without a refresh.
+### 4. Tier auto-progression ✅ Done (Slice 1)
+`submitReflection` and `dismissReflection` both award `xpForSession(session)` XP — 1 XP/min for the first 60 min, 3 XP/min past 60 min, plus a +5 bonus on natural completion. `applyXpAward` walks the tier ladder forward, rolling overflow into the next tier. Tier 6 (`xpToNext = Infinity`) accumulates without advancing. Sidebar tier card and Focus Ladder both update live. Seed values reset to Tier 1 / 0 XP so the ladder advances honestly from a fresh install.
 
 ### 5. Session log / reflection history view
 **Why:** Reflections are being collected (`focusStore.sessionLog`) but never displayed. The data is the product — users can't see their own history.

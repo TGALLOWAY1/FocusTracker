@@ -2,34 +2,31 @@
 
 ## Recommended Immediate Path
 
-The product is roughly **90% feature-complete for the Today view** and well architected. The single biggest leverage point is making the dashboard *react to real user activity*. Today, the right-column stats and the tier ladder are demo data — they don't change when a user actually completes a session. Closing that loop is what turns this from "polished landing page" into "useful tool".
+Slice 1 ("make the dashboard live") is done — completing a real session now drives the weekly chart, totals, completion rate, XP, and tier progression. The next visible gap is **the session history view**: reflections accumulate in `focusStore.sessionLog` but the user can't see them anywhere. That's Slice 2.
 
 Order of operations:
 
-1. Land the verification infra (Step 7 of the audit — scripts, eslint, vitest, one smoke test) so future changes have a safety net.
-2. Wire the live-data loop: stats derived from `sessionLog`, project cards clickable, XP awarded on session completion, tier auto-advance.
-3. Surface session history so users can see their own data.
+1. ~~Land the verification infra~~ ✅
+2. ~~Wire the live-data loop~~ ✅
+3. Surface session history so users can see their own data (Slice 2 below).
 4. Only then start on additional views, settings, or mobile.
 
 Resist the urge to start with cosmetic mockup-parity work (photographic backdrop, avatar image). The current visuals are good enough and shouldn't move until the data model behind them is real.
 
 ## Next 3 Implementation Slices
 
-### Slice 1 — Make the dashboard live (P0)
+### Slice 1 — Make the dashboard live (P0) ✅ Done
 
-**Goal:** Completing a real session changes the dashboard.
+Shipped on `claude/systematic-audit-driven-dev-BEInu`:
 
-**Scope**
-- Derive `FocusStatsPanel` data from `focusStore.sessionLog`. Add `useWeeklyStats()` hook that buckets the last 7 days. Keep `WEEK_STATS` as the empty-state default.
-- Award XP in `submitReflection` (and possibly `dismissReflection`) based on `actualDurationSec`. Decide policy via `OPEN_QUESTIONS.md#1-3`.
-- Auto-advance `currentTierId` when `xp >= tier.xpToNext`. Decide overflow behavior via `OPEN_QUESTIONS.md#4`.
-- Make `ActiveProjectsPanel` cards clickable — on click, set `focusStore.project` (and ideally a future `projectId`) and scroll the timer into view.
-- Remove or wire the three decorative buttons: "View All" (`FocusLadderPanel`), "Manage" (`ActiveProjectsPanel`), and the disabled Quick Add FAB (`BottomBar`).
-
-**Definition of Done**
-- Completing a session bumps "Sessions" by 1 in the right panel, increments the relevant day's bar, awards XP, and visibly progresses (or doesn't, depending on policy) the tier card.
-- Clicking a project row preloads the focus session with that project.
-- No clickable-looking element on the dashboard is a no-op.
+- `bucketWeeklyStats` + `useWeeklyStats` derive Focus Stats from `sessionLog`. `WEEK_STATS` deleted. Sidebar deep-work tile reads the same hook.
+- XP policy: `xpForSession` = `min(60, mins) + 3 × max(0, mins − 60) + (completedNaturally ? 5 : 0)`. Awarded on **both** `submitReflection` and `dismissReflection` (skipping reflection is not a forfeit).
+- `applyXpAward` rolls overflow XP into the next tier; advances stop at Tier 6 (`xpToNext = Infinity`).
+- `ActiveProjectsPanel` rows are real `<button>`s that call `setProject` and smooth-scroll to `#focus-session-card`.
+- "View All" and "Manage" removed. Quick Add FAB stays visibly disabled.
+- Seed XP/tier/streaks reset to 0/1/0/0 so the ladder advances honestly from a fresh install.
+- Default `status` flipped from `"running"` to `"idle"` (audit fix).
+- 17 tests passing — `xpForSession` curve, `applyXpAward` rollover (including peak-tier and multi-tier walks), `submit/dismissReflection` XP+tier integration, `bucketWeeklyStats` empty/bucketed/exclude-prior-week/maxY-growth.
 
 ### Slice 2 — Make the data visible (P1)
 

@@ -312,7 +312,10 @@ export function FocusSessionCard() {
   }, [status, tick]);
 
   return (
-    <section className="bg-bg-card border border-border-subtle rounded-2xl shadow-card overflow-hidden">
+    <section
+      id="focus-session-card"
+      className="bg-bg-card border border-border-subtle rounded-2xl shadow-card overflow-hidden scroll-mt-6"
+    >
       {status === "idle" ? <IdleState /> : <ActiveState />}
       <FlagsStrip />
     </section>
