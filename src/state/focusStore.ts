@@ -18,6 +18,8 @@ type FocusState = {
   remainingSec: number;
   nextBreak: { label: string; minutes: number };
   flags: Flags;
+  currentTierId: number;
+  xp: number;
 };
 
 type FocusActions = {
@@ -27,6 +29,8 @@ type FocusActions = {
   end: () => void;
   tick: () => void;
   setDuration: (sec: number) => void;
+  setTier: (tierId: number) => void;
+  setXp: (xp: number) => void;
 };
 
 export type FocusStore = FocusState & FocusActions;
@@ -43,6 +47,8 @@ export const useFocusStore = create<FocusStore>((set) => ({
     notificationsMuted: true,
     distractionsBlocked: true,
   },
+  currentTierId: 3,
+  xp: 1250,
 
   start: () =>
     set((s) => ({ status: "running", remainingSec: s.durationSec })),
@@ -61,4 +67,6 @@ export const useFocusStore = create<FocusStore>((set) => ({
     }),
 
   setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
+  setTier: (tierId) => set({ currentTierId: tierId }),
+  setXp: (xp) => set({ xp }),
 }));

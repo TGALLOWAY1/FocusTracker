@@ -1,4 +1,5 @@
 import { Card, CardHeader } from "../ui/Card";
+import { FocusLadderPanel } from "../dashboard/FocusLadderPanel";
 
 function PhasePlaceholder({
   title,
@@ -34,12 +35,7 @@ function PhasePlaceholder({
 export function RightPanel() {
   return (
     <aside className="hidden lg:flex flex-col gap-5 border-l border-border-subtle p-6 min-h-0 overflow-y-auto scrollbar-thin">
-      <PhasePlaceholder
-        title="Focus Ladder"
-        trailing="View All"
-        phase="Tier progression arrives in Phase 3"
-        minHeight={220}
-      />
+      <FocusLadderPanel />
       <PhasePlaceholder
         title="Focus Stats"
         trailing="This Week"
