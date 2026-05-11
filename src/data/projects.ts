@@ -2,6 +2,14 @@ import { Music, BookOpen, Code2, type LucideIcon } from "lucide-react";
 
 export type ProjectColor = "purple" | "green" | "orange";
 
+export type ProjectIconKey = "music" | "book" | "code";
+
+export const PROJECT_ICONS: Record<ProjectIconKey, LucideIcon> = {
+  music: Music,
+  book: BookOpen,
+  code: Code2,
+};
+
 export type Project = {
   id: string;
   name: string;
@@ -9,10 +17,10 @@ export type Project = {
   weeklyMinutes: number;
   weeklyGoalMinutes: number;
   color: ProjectColor;
-  icon: LucideIcon;
+  iconKey: ProjectIconKey;
 };
 
-export const ACTIVE_PROJECTS: Project[] = [
+export const SEED_PROJECTS: Project[] = [
   {
     id: "harmonia-ep",
     name: "Harmonia EP",
@@ -20,7 +28,7 @@ export const ACTIVE_PROJECTS: Project[] = [
     weeklyMinutes: 12 * 60 + 30,
     weeklyGoalMinutes: 1000,
     color: "purple",
-    icon: Music,
+    iconKey: "music",
   },
   {
     id: "ml-path",
@@ -29,7 +37,7 @@ export const ACTIVE_PROJECTS: Project[] = [
     weeklyMinutes: 6 * 60 + 15,
     weeklyGoalMinutes: 750,
     color: "green",
-    icon: BookOpen,
+    iconKey: "book",
   },
   {
     id: "synapse",
@@ -38,7 +46,7 @@ export const ACTIVE_PROJECTS: Project[] = [
     weeklyMinutes: 3 * 60 + 40,
     weeklyGoalMinutes: 880,
     color: "orange",
-    icon: Code2,
+    iconKey: "code",
   },
 ];
 

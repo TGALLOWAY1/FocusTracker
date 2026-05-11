@@ -1,15 +1,16 @@
 import { Card, CardHeader } from "../ui/Card";
 import { ProgressRing } from "../ui/ProgressRing";
 import {
-  ACTIVE_PROJECTS,
+  PROJECT_ICONS,
   projectColorClasses,
   type Project,
 } from "../../data/projects";
+import { useProjectStore } from "../../state/projectStore";
 import { formatHM } from "../../utils/time";
 
 function ProjectRow({ project }: { project: Project }) {
   const colors = projectColorClasses(project.color);
-  const Icon = project.icon;
+  const Icon = PROJECT_ICONS[project.iconKey];
   const progress = project.weeklyMinutes / project.weeklyGoalMinutes;
 
   return (
@@ -50,21 +51,17 @@ function ProjectRow({ project }: { project: Project }) {
 }
 
 export function ActiveProjectsPanel() {
+  const projects = useProjectStore((s) => s.projects);
   return (
     <Card>
       <CardHeader
         title="Active Projects"
         trailing={
-          <button
-            type="button"
-            className="text-xs font-medium text-brand-purple hover:text-brand-purple/80 transition-colors"
-          >
-            Manage
-          </button>
+          <span className="text-xs font-medium text-text-muted">Manage</span>
         }
       />
       <ul className="mt-2 flex flex-col divide-y divide-border-subtle/50">
-        {ACTIVE_PROJECTS.map((project) => (
+        {projects.map((project) => (
           <ProjectRow key={project.id} project={project} />
         ))}
       </ul>

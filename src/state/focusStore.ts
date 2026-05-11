@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import { newId } from "../utils/id";
 
 export type SessionStatus = "idle" | "running" | "paused";
@@ -96,94 +97,143 @@ function buildCompletion(
   };
 }
 
-export const useFocusStore = create<FocusStore>((set) => ({
-  status: "running",
-  project: "Harmonia EP",
-  task: "Mixing and arrangement",
-  durationSec: DEFAULT_DURATION_SEC,
-  remainingSec: DEFAULT_DURATION_SEC,
-  nextBreak: { label: "Short Break", minutes: 5 },
-  flags: {
-    focusMode: true,
-    notificationsMuted: true,
-    distractionsBlocked: true,
-  },
-  currentTierId: 3,
-  xp: 1250,
-  focusStreakDays: 14,
-  projectStreakDays: 7,
-  dailyPlan: null,
-  pendingReflectionFor: null,
-  sessionLog: [],
+type PersistedFocus = Pick<
+  FocusState,
+  | "project"
+  | "task"
+  | "durationSec"
+  | "flags"
+  | "currentTierId"
+  | "xp"
+  | "focusStreakDays"
+  | "projectStreakDays"
+  | "dailyPlan"
+  | "sessionLog"
+>;
 
-  start: () =>
-    set((s) => ({ status: "running", remainingSec: s.durationSec })),
-  pause: () => set({ status: "paused" }),
-  resume: () => set({ status: "running" }),
+export const useFocusStore = create<FocusStore>()(
+  persist(
+    (set) => ({
+      status: "running" as SessionStatus,
+      project: "Harmonia EP",
+      task: "Mixing and arrangement",
+      durationSec: DEFAULT_DURATION_SEC,
+      remainingSec: DEFAULT_DURATION_SEC,
+      nextBreak: { label: "Short Break", minutes: 5 },
+      flags: {
+        focusMode: true,
+        notificationsMuted: true,
+        distractionsBlocked: true,
+      },
+      currentTierId: 3,
+      xp: 1250,
+      focusStreakDays: 14,
+      projectStreakDays: 7,
+      dailyPlan: null,
+      pendingReflectionFor: null,
+      sessionLog: [],
 
-  end: () =>
-    set((s) => ({
-      status: "idle",
-      remainingSec: s.durationSec,
-      pendingReflectionFor: buildCompletion(s, false),
-    })),
+      start: () =>
+        set((s) => ({ status: "running", remainingSec: s.durationSec })),
+      pause: () => set({ status: "paused" }),
+      resume: () => set({ status: "running" }),
 
-  tick: () =>
-    set((s) => {
-      if (s.status !== "running") return s;
-      if (s.remainingSec <= 1) {
-        return {
+      end: () =>
+        set((s) => ({
           status: "idle",
           remainingSec: s.durationSec,
-          pendingReflectionFor: buildCompletion(s, true),
+          pendingReflectionFor: buildCompletion(s, false),
+        })),
+
+      tick: () =>
+        set((s) => {
+          if (s.status !== "running") return s;
+          if (s.remainingSec <= 1) {
+            return {
+              status: "idle",
+              remainingSec: s.durationSec,
+              pendingReflectionFor: buildCompletion(s, true),
+            };
+          }
+          return { remainingSec: s.remainingSec - 1 };
+        }),
+
+      setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
+      setTier: (tierId) => set({ currentTierId: tierId }),
+      setXp: (xp) => set({ xp }),
+      setFocusStreak: (days) => set({ focusStreakDays: days }),
+      setProjectStreak: (days) => set({ projectStreakDays: days }),
+
+      setDailyPlan: (plan) =>
+        set((s) => {
+          const newDurationSec = plan.plannedDurationMin * 60;
+          return {
+            dailyPlan: plan,
+            project: plan.projectName,
+            task: plan.primaryTask,
+            durationSec: newDurationSec,
+            remainingSec:
+              s.status === "running" || s.status === "paused"
+                ? s.remainingSec
+                : newDurationSec,
+          };
+        }),
+      clearDailyPlan: () => set({ dailyPlan: null }),
+
+      submitReflection: (reflection) =>
+        set((s) => {
+          if (!s.pendingReflectionFor) return s;
+          return {
+            pendingReflectionFor: null,
+            sessionLog: [
+              { session: s.pendingReflectionFor, reflection },
+              ...s.sessionLog,
+            ],
+          };
+        }),
+
+      dismissReflection: () =>
+        set((s) => {
+          if (!s.pendingReflectionFor) return s;
+          return {
+            pendingReflectionFor: null,
+            sessionLog: [
+              { session: s.pendingReflectionFor, reflection: null },
+              ...s.sessionLog,
+            ],
+          };
+        }),
+    }),
+    {
+      name: "focus-ladder.focus",
+      version: 1,
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state): PersistedFocus => ({
+        project: state.project,
+        task: state.task,
+        durationSec: state.durationSec,
+        flags: state.flags,
+        currentTierId: state.currentTierId,
+        xp: state.xp,
+        focusStreakDays: state.focusStreakDays,
+        projectStreakDays: state.projectStreakDays,
+        dailyPlan: state.dailyPlan,
+        sessionLog: state.sessionLog,
+      }),
+      // Always boot into idle on rehydration: a refresh mid-session
+      // shouldn't resume a stale countdown, and a half-finished
+      // reflection shouldn't reappear if the user closed the tab.
+      merge: (persistedState, currentState) => {
+        const persisted = (persistedState ?? {}) as Partial<PersistedFocus>;
+        const durationSec = persisted.durationSec ?? currentState.durationSec;
+        return {
+          ...currentState,
+          ...persisted,
+          status: "idle" as SessionStatus,
+          remainingSec: durationSec,
+          pendingReflectionFor: null,
         };
-      }
-      return { remainingSec: s.remainingSec - 1 };
-    }),
-
-  setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
-  setTier: (tierId) => set({ currentTierId: tierId }),
-  setXp: (xp) => set({ xp }),
-  setFocusStreak: (days) => set({ focusStreakDays: days }),
-  setProjectStreak: (days) => set({ projectStreakDays: days }),
-
-  setDailyPlan: (plan) =>
-    set((s) => {
-      const newDurationSec = plan.plannedDurationMin * 60;
-      return {
-        dailyPlan: plan,
-        project: plan.projectName,
-        task: plan.primaryTask,
-        durationSec: newDurationSec,
-        remainingSec:
-          s.status === "running" || s.status === "paused"
-            ? s.remainingSec
-            : newDurationSec,
-      };
-    }),
-  clearDailyPlan: () => set({ dailyPlan: null }),
-
-  submitReflection: (reflection) =>
-    set((s) => {
-      if (!s.pendingReflectionFor) return s;
-      return {
-        pendingReflectionFor: null,
-        sessionLog: [
-          { session: s.pendingReflectionFor, reflection },
-          ...s.sessionLog,
-        ],
-      };
-    }),
-
-  dismissReflection: () =>
-    set((s) => {
-      if (!s.pendingReflectionFor) return s;
-      return {
-        pendingReflectionFor: null,
-        sessionLog: [
-          { session: s.pendingReflectionFor, reflection: null },
-          ...s.sessionLog,
-        ],
-      };
-    }),
-}));
+      },
+    }
+  )
+);

@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { useFocusStore } from "../../state/focusStore";
+import { useProjectStore } from "../../state/projectStore";
 import {
-  ACTIVE_PROJECTS,
+  PROJECT_ICONS,
   projectColorClasses,
   type Project,
 } from "../../data/projects";
@@ -45,7 +46,7 @@ function ProjectPill({
   onClick: () => void;
 }) {
   const colors = projectColorClasses(project.color);
-  const Icon = project.icon;
+  const Icon = PROJECT_ICONS[project.iconKey];
   return (
     <button
       type="button"
@@ -72,10 +73,11 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
   const storeTask = useFocusStore((s) => s.task);
   const storeDuration = useFocusStore((s) => s.durationSec);
   const setDailyPlan = useFocusStore((s) => s.setDailyPlan);
+  const projects = useProjectStore((s) => s.projects);
 
   const defaultProjectId =
-    ACTIVE_PROJECTS.find((p) => p.name === storeProject)?.id ??
-    ACTIVE_PROJECTS[0]?.id ??
+    projects.find((p) => p.name === storeProject)?.id ??
+    projects[0]?.id ??
     "";
   const defaultDurationMin = Math.round(storeDuration / 60);
 
@@ -95,7 +97,7 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
-  const selectedProject = ACTIVE_PROJECTS.find((p) => p.id === projectId);
+  const selectedProject = projects.find((p) => p.id === projectId);
   const canSubmit = !!selectedProject && primary.trim().length > 0;
 
   const submit = () => {
@@ -123,7 +125,7 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
         <div>
           <FieldLabel>Project</FieldLabel>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {ACTIVE_PROJECTS.map((p) => (
+            {projects.map((p) => (
               <ProjectPill
                 key={p.id}
                 project={p}
