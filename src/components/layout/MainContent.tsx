@@ -1,7 +1,11 @@
+import { useState } from "react";
 import { Sunrise, Sparkles } from "lucide-react";
-import { Card, CardHeader } from "../ui/Card";
+import { FocusSessionCard } from "../dashboard/FocusSessionCard";
+import { IdeaParkingLot } from "../dashboard/IdeaParkingLot";
+import { PlanMyDayModal } from "../dashboard/PlanMyDayModal";
+import { SessionReflectionModal } from "../dashboard/SessionReflectionModal";
 
-function Greeting() {
+function Greeting({ onPlan }: { onPlan: () => void }) {
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap">
       <div className="flex items-start gap-4 min-w-0">
@@ -20,10 +24,8 @@ function Greeting() {
 
       <button
         type="button"
-        disabled
-        aria-disabled="true"
-        title="Plan My Day — coming in Phase 8"
-        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-bg-card border border-border-subtle text-sm font-medium text-text-secondary cursor-not-allowed"
+        onClick={onPlan}
+        className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-bg-card border border-border-subtle text-sm font-medium text-text-secondary hover:text-text-primary hover:border-brand-purple/30 transition-colors"
       >
         <Sparkles size={16} className="text-brand-purple" />
         <span>Plan My Day</span>
@@ -32,55 +34,16 @@ function Greeting() {
   );
 }
 
-function PhasePlaceholder({
-  title,
-  trailing,
-  phase,
-  minHeight = 220,
-}: {
-  title: string;
-  trailing?: string;
-  phase: string;
-  minHeight?: number;
-}) {
-  return (
-    <Card>
-      <CardHeader
-        title={title}
-        trailing={
-          trailing ? (
-            <span className="text-xs text-text-muted">{trailing}</span>
-          ) : undefined
-        }
-      />
-      <div
-        className="mt-4 rounded-xl border border-dashed border-border-subtle bg-bg-base/40 flex items-center justify-center text-xs text-text-muted"
-        style={{ minHeight }}
-      >
-        {phase}
-      </div>
-    </Card>
-  );
-}
-
 export function MainContent() {
+  const [planOpen, setPlanOpen] = useState(false);
+
   return (
     <main className="flex flex-col gap-5 p-6 min-w-0 overflow-y-auto scrollbar-thin">
-      <Greeting />
-
-      <PhasePlaceholder
-        title="Focus Session"
-        trailing="End Session"
-        phase="Timer arrives in Phase 2"
-        minHeight={360}
-      />
-
-      <PhasePlaceholder
-        title="Idea Parking Lot"
-        trailing="Add Idea"
-        phase="Capture flow arrives in Phase 5"
-        minHeight={140}
-      />
+      <Greeting onPlan={() => setPlanOpen(true)} />
+      <FocusSessionCard />
+      <IdeaParkingLot />
+      <PlanMyDayModal open={planOpen} onClose={() => setPlanOpen(false)} />
+      <SessionReflectionModal />
     </main>
   );
 }
