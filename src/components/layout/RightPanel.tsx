@@ -1,5 +1,6 @@
 import { Card, CardHeader } from "../ui/Card";
 import { FocusLadderPanel } from "../dashboard/FocusLadderPanel";
+import { ActiveProjectsPanel } from "../dashboard/ActiveProjectsPanel";
 
 function PhasePlaceholder({
   title,
@@ -42,12 +43,7 @@ export function RightPanel() {
         phase="Stats + chart arrive in Phase 6"
         minHeight={220}
       />
-      <PhasePlaceholder
-        title="Active Projects"
-        trailing="Manage"
-        phase="Project list arrives in Phase 4"
-        minHeight={200}
-      />
+      <ActiveProjectsPanel />
     </aside>
   );
 }
