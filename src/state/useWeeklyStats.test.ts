@@ -9,12 +9,17 @@ function makeSession(
 ): LoggedSession {
   const session: CompletedSession = {
     id: `s-${endedAt}`,
+    projectId: "test-project",
     project: "Test",
     task: "Test",
+    startedAt: endedAt - actualDurationSec * 1000,
+    endedAt,
     plannedDurationSec: actualDurationSec,
     actualDurationSec,
-    endedAt,
     completedNaturally,
+    activityCategory: "other",
+    sessionType: "light",
+    tags: [],
   };
   return { session, reflection: null };
 }

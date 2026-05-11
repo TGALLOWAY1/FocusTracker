@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { newId } from "../utils/id";
 import { getTier } from "../data/focusTiers";
+import type { ActivityCategory } from "../data/activityCategories";
+import { useProjectStore } from "./projectStore";
 
 export type SessionStatus = "idle" | "running" | "paused";
 
@@ -26,21 +28,28 @@ export type DailyPlan = {
   createdAt: number;
 };
 
+export type SessionType = "deep" | "light" | "learning";
+
 export type CompletedSession = {
   id: string;
+  projectId: string;
   project: string;
   task: string;
+  startedAt: number;
+  endedAt: number;
   plannedDurationSec: number;
   actualDurationSec: number;
-  endedAt: number;
   completedNaturally: boolean;
+  activityCategory: ActivityCategory;
+  sessionType: SessionType;
+  tags: string[];
 };
 
 export type SessionReflection = {
   sessionId: string;
   focusLevel: number;
   energyLevel: number;
-  biggestDistraction?: string;
+  reflection?: string;
   completedPlanned: boolean;
   createdAt: number;
 };
@@ -50,8 +59,14 @@ export type LoggedSession = {
   reflection: SessionReflection | null;
 };
 
+type ActiveProjectInput = {
+  id: string;
+  name: string;
+};
+
 type FocusState = {
   status: SessionStatus;
+  projectId: string;
   project: string;
   task: string;
   durationSec: number;
@@ -73,7 +88,7 @@ type FocusActions = {
   resume: () => void;
   end: () => void;
   tick: () => void;
-  setProject: (name: string) => void;
+  setActiveProject: (project: ActiveProjectInput) => void;
   setDuration: (sec: number) => void;
   setTier: (tierId: number) => void;
   setXp: (xp: number) => void;
@@ -87,19 +102,69 @@ type FocusActions = {
 
 export type FocusStore = FocusState & FocusActions;
 
+function lookupActivityCategory(projectId: string): ActivityCategory {
+  const project = useProjectStore
+    .getState()
+    .projects.find((p) => p.id === projectId);
+  return project?.activityCategory ?? "other";
+}
+
+function deriveSessionType(
+  category: ActivityCategory,
+  actualDurationSec: number
+): SessionType {
+  if (category === "learning" || category === "reading") return "learning";
+  const minutes = actualDurationSec / 60;
+  return minutes >= DEEP_WORK_THRESHOLD_MIN ? "deep" : "light";
+}
+
+function buildTags(opts: {
+  category: ActivityCategory;
+  sessionType: SessionType;
+  completedNaturally: boolean;
+}): string[] {
+  const categoryLabel =
+    opts.category.charAt(0).toUpperCase() + opts.category.slice(1);
+  const tags: string[] = [];
+  if (opts.sessionType === "deep") tags.push("Deep Work");
+  if (opts.sessionType === "learning") tags.push("Learning");
+  if (opts.sessionType === "light") tags.push("Light Work");
+  if (categoryLabel !== "Other" && !tags.includes(categoryLabel)) {
+    tags.push(categoryLabel);
+  }
+  if (opts.completedNaturally) tags.push("Completed");
+  return tags;
+}
+
 function buildCompletion(
   state: FocusState,
   completedNaturally: boolean
 ): CompletedSession {
   const elapsed = Math.max(0, state.durationSec - state.remainingSec);
+  const actualDurationSec = completedNaturally ? state.durationSec : elapsed;
+  const endedAt = Date.now();
+  const startedAt = endedAt - actualDurationSec * 1000;
+  const category = lookupActivityCategory(state.projectId);
+  const sessionType = deriveSessionType(category, actualDurationSec);
+  const tags = buildTags({
+    category,
+    sessionType,
+    completedNaturally,
+  });
+
   return {
     id: newId("session"),
+    projectId: state.projectId,
     project: state.project,
     task: state.task,
+    startedAt,
+    endedAt,
     plannedDurationSec: state.durationSec,
-    actualDurationSec: completedNaturally ? state.durationSec : elapsed,
-    endedAt: Date.now(),
+    actualDurationSec,
     completedNaturally,
+    activityCategory: category,
+    sessionType,
+    tags,
   };
 }
 
@@ -137,6 +202,7 @@ export function applyXpAward(
 
 type PersistedFocus = Pick<
   FocusState,
+  | "projectId"
   | "project"
   | "task"
   | "durationSec"
@@ -153,6 +219,7 @@ export const useFocusStore = create<FocusStore>()(
   persist(
     (set) => ({
       status: "idle" as SessionStatus,
+      projectId: "harmonia-ep",
       project: "Harmonia EP",
       task: "Mixing and arrangement",
       durationSec: DEFAULT_DURATION_SEC,
@@ -196,7 +263,8 @@ export const useFocusStore = create<FocusStore>()(
           return { remainingSec: s.remainingSec - 1 };
         }),
 
-      setProject: (name) => set({ project: name }),
+      setActiveProject: (project) =>
+        set({ projectId: project.id, project: project.name }),
       setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
       setTier: (tierId) => set({ currentTierId: tierId }),
       setXp: (xp) => set({ xp }),
@@ -208,6 +276,7 @@ export const useFocusStore = create<FocusStore>()(
           const newDurationSec = plan.plannedDurationMin * 60;
           return {
             dailyPlan: plan,
+            projectId: plan.projectId,
             project: plan.projectName,
             task: plan.primaryTask,
             durationSec: newDurationSec,
@@ -253,9 +322,10 @@ export const useFocusStore = create<FocusStore>()(
     }),
     {
       name: "focus-ladder.focus",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
       partialize: (state): PersistedFocus => ({
+        projectId: state.projectId,
         project: state.project,
         task: state.task,
         durationSec: state.durationSec,
