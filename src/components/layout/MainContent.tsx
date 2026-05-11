@@ -1,5 +1,6 @@
 import { Sunrise, Sparkles } from "lucide-react";
 import { Card, CardHeader } from "../ui/Card";
+import { FocusSessionCard } from "../dashboard/FocusSessionCard";
 
 function Greeting() {
   return (
@@ -68,12 +69,7 @@ export function MainContent() {
     <main className="flex flex-col gap-5 p-6 min-w-0 overflow-y-auto scrollbar-thin">
       <Greeting />
 
-      <PhasePlaceholder
-        title="Focus Session"
-        trailing="End Session"
-        phase="Timer arrives in Phase 2"
-        minHeight={360}
-      />
+      <FocusSessionCard />
 
       <PhasePlaceholder
         title="Idea Parking Lot"
