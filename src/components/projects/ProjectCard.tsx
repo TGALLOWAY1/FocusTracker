@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type MouseEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { MoreHorizontal, Pencil, Trash2, Clock3, Tag } from "lucide-react";
 import {
   PROJECT_ICONS,
@@ -39,20 +40,22 @@ export function ProjectCard({ project, stats, onEdit, onLogTime }: Props) {
   const Icon = PROJECT_ICONS[project.iconKey];
   const totalMinutes = stats?.totalMinutes ?? 0;
   const removeProject = useProjectStore((s) => s.removeProject);
+  const navigate = useNavigate();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!menuOpen) return;
-    const onDocClick = (e: MouseEvent) => {
+    const onDocClick = (e: globalThis.MouseEvent) => {
       if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [menuOpen]);
 
-  const handleDelete = () => {
+  const handleDelete = (e: MouseEvent) => {
+    e.stopPropagation();
     setMenuOpen(false);
     if (
       window.confirm(`Delete "${project.name}"? This cannot be undone.`)
@@ -61,21 +64,40 @@ export function ProjectCard({ project, stats, onEdit, onLogTime }: Props) {
     }
   };
 
+  const navigateToDetail = () => navigate(`/projects/${project.id}`);
+  const handleCardKey = (e: KeyboardEvent<HTMLElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      navigateToDetail();
+    }
+  };
+  const stop = (e: MouseEvent) => e.stopPropagation();
+
   const visibleTags = project.tags.slice(0, 3);
   const extraTags = project.tags.length - visibleTags.length;
 
   return (
-    <article className="bg-bg-card border border-border-subtle rounded-2xl shadow-card overflow-hidden flex flex-col">
+    <article
+      role="link"
+      tabIndex={0}
+      onClick={navigateToDetail}
+      onKeyDown={handleCardKey}
+      aria-label={`Open ${project.name}`}
+      className="bg-bg-card border border-border-subtle rounded-2xl shadow-card overflow-hidden flex flex-col cursor-pointer transition-colors hover:bg-bg-cardHover hover:border-border-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60"
+    >
       <div className="relative h-36" style={{ background: coverBackground(project.cover) }}>
         <div
           className={`absolute top-3 left-3 w-9 h-9 rounded-xl flex items-center justify-center backdrop-blur-md bg-black/30 border border-white/10`}
         >
           <Icon size={18} className={colors.iconColor} strokeWidth={2} />
         </div>
-        <div className="absolute top-3 right-3" ref={menuRef}>
+        <div className="absolute top-3 right-3" ref={menuRef} onClick={stop}>
           <button
             type="button"
-            onClick={() => setMenuOpen((v) => !v)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setMenuOpen((v) => !v);
+            }}
             aria-label="Project actions"
             aria-haspopup="menu"
             aria-expanded={menuOpen}
@@ -91,7 +113,8 @@ export function ProjectCard({ project, stats, onEdit, onLogTime }: Props) {
               <button
                 role="menuitem"
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setMenuOpen(false);
                   onEdit();
                 }}
@@ -102,7 +125,8 @@ export function ProjectCard({ project, stats, onEdit, onLogTime }: Props) {
               <button
                 role="menuitem"
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setMenuOpen(false);
                   onLogTime();
                 }}
