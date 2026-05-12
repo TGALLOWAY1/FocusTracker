@@ -1,4 +1,4 @@
-import { Clock, CheckCircle2, Target, Sparkles } from "lucide-react";
+import { Clock, CheckCircle2, Target, Sparkles, Zap } from "lucide-react";
 import { Card } from "../ui/Card";
 import { formatHM } from "../../utils/time";
 import type { InsightsSummary } from "../../state/useInsightsData";
@@ -54,7 +54,7 @@ export function SummaryCards({ summary }: { summary: InsightsSummary }) {
     : `${Math.round(summary.completionRate * 100)}%`;
 
   return (
-    <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 xl:grid-cols-5 gap-3">
       <StatCard
         label="Total Focus Time"
         value={isEmpty ? "—" : formatHM(summary.totalMinutes)}
@@ -83,6 +83,14 @@ export function SummaryCards({ summary }: { summary: InsightsSummary }) {
         label="Avg Focus Rating"
         value={formatRating(summary.avgFocusRating)}
         Icon={Sparkles}
+        iconBg="bg-accent-orangeSoft"
+        iconColor="text-accent-orange"
+        valueClass="text-accent-orange"
+      />
+      <StatCard
+        label="Avg Energy Rating"
+        value={formatRating(summary.avgEnergyRating)}
+        Icon={Zap}
         iconBg="bg-accent-orangeSoft"
         iconColor="text-accent-orange"
         valueClass="text-accent-orange"

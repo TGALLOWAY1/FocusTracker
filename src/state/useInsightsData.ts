@@ -50,6 +50,10 @@ export type InsightsSummary = {
   completionRate: number;
   /** 0..5, average focus rating across sessions with reflections; 0 when none. */
   avgFocusRating: number;
+  /** 0..5, average energy rating across sessions with reflections; 0 when none. */
+  avgEnergyRating: number;
+  /** 0..1, share of reflected sessions where the user marked the plan as completed; 0 when no reflections. */
+  completedPlannedRate: number;
 };
 
 export type InsightsData = {
@@ -227,12 +231,24 @@ function computeSummary(sessions: LoggedSession[]): InsightsSummary {
   let naturalCount = 0;
   let focusSum = 0;
   let focusCount = 0;
+  let energySum = 0;
+  let energyCount = 0;
+  let reflectedCount = 0;
+  let completedPlannedCount = 0;
   for (const { session, reflection } of sessions) {
     totalMinutes += session.actualDurationSec / 60;
     if (session.completedNaturally) naturalCount += 1;
-    if (reflection && reflection.focusLevel > 0) {
-      focusSum += reflection.focusLevel;
-      focusCount += 1;
+    if (reflection) {
+      reflectedCount += 1;
+      if (reflection.completedPlanned) completedPlannedCount += 1;
+      if (reflection.focusLevel > 0) {
+        focusSum += reflection.focusLevel;
+        focusCount += 1;
+      }
+      if (reflection.energyLevel > 0) {
+        energySum += reflection.energyLevel;
+        energyCount += 1;
+      }
     }
   }
   return {
@@ -241,6 +257,9 @@ function computeSummary(sessions: LoggedSession[]): InsightsSummary {
     completionRate:
       sessions.length === 0 ? 0 : naturalCount / sessions.length,
     avgFocusRating: focusCount === 0 ? 0 : focusSum / focusCount,
+    avgEnergyRating: energyCount === 0 ? 0 : energySum / energyCount,
+    completedPlannedRate:
+      reflectedCount === 0 ? 0 : completedPlannedCount / reflectedCount,
   };
 }
 

@@ -15,6 +15,8 @@ type MakeSessionInput = {
   sessionType?: "deep" | "light" | "learning";
   projectId?: string;
   focusLevel?: number;
+  energyLevel?: number;
+  completedPlanned?: boolean;
 };
 
 function makeSession(input: MakeSessionInput): LoggedSession {
@@ -22,7 +24,7 @@ function makeSession(input: MakeSessionInput): LoggedSession {
   const session: CompletedSession = {
     id: `s-${input.endedAt}`,
     projectId: input.projectId ?? "p1",
-    project: "Test",
+    projectName: "Test",
     task: "Test",
     startedAt: input.endedAt - actualDurationSec * 1000,
     endedAt: input.endedAt,
@@ -33,16 +35,21 @@ function makeSession(input: MakeSessionInput): LoggedSession {
     sessionType: input.sessionType ?? "light",
     tags: [],
   };
-  const reflection: SessionReflection | null =
-    input.focusLevel === undefined
-      ? null
-      : {
-          sessionId: session.id,
-          focusLevel: input.focusLevel,
-          energyLevel: 3,
-          completedPlanned: true,
-          createdAt: input.endedAt,
-        };
+  // A session has a reflection only if at least one rating-like field is
+  // provided. Defaults keep existing tests' behavior unchanged.
+  const hasReflection =
+    input.focusLevel !== undefined ||
+    input.energyLevel !== undefined ||
+    input.completedPlanned !== undefined;
+  const reflection: SessionReflection | null = hasReflection
+    ? {
+        sessionId: session.id,
+        focusLevel: input.focusLevel ?? 0,
+        energyLevel: input.energyLevel ?? 3,
+        completedPlanned: input.completedPlanned ?? true,
+        createdAt: input.endedAt,
+      }
+    : null;
   return { session, reflection };
 }
 
@@ -67,6 +74,8 @@ describe("computeInsights", () => {
       sessionCount: 0,
       completionRate: 0,
       avgFocusRating: 0,
+      avgEnergyRating: 0,
+      completedPlannedRate: 0,
     });
     expect(data.byCategory).toEqual([]);
     expect(data.trend.points).toHaveLength(7);
@@ -193,6 +202,50 @@ describe("computeInsights", () => {
       REF_NOW
     );
     expect(data.summary.avgFocusRating).toBeCloseTo(3, 5);
+  });
+
+  it("averages energy rating only across sessions with reflections", () => {
+    const sessions = [
+      makeSession({ endedAt: WED, durationMin: 60, energyLevel: 5 }),
+      makeSession({ endedAt: MON, durationMin: 60, energyLevel: 1 }),
+      makeSession({ endedAt: MON, durationMin: 60 }), // no reflection
+    ];
+    const data = computeInsights(
+      sessions,
+      { dateRange: "week", quickFilter: "all" },
+      REF_NOW
+    );
+    expect(data.summary.avgEnergyRating).toBeCloseTo(3, 5);
+  });
+
+  it("excludes zero-level ratings from rating averages", () => {
+    const sessions = [
+      makeSession({ endedAt: WED, durationMin: 60, focusLevel: 4, energyLevel: 0 }),
+      makeSession({ endedAt: MON, durationMin: 60, focusLevel: 0, energyLevel: 2 }),
+    ];
+    const data = computeInsights(
+      sessions,
+      { dateRange: "week", quickFilter: "all" },
+      REF_NOW
+    );
+    // Only one valid focus reading (4); only one valid energy reading (2).
+    expect(data.summary.avgFocusRating).toBeCloseTo(4, 5);
+    expect(data.summary.avgEnergyRating).toBeCloseTo(2, 5);
+  });
+
+  it("computes completedPlannedRate over reflected sessions only", () => {
+    const sessions = [
+      makeSession({ endedAt: WED, durationMin: 60, focusLevel: 4, completedPlanned: true }),
+      makeSession({ endedAt: MON, durationMin: 60, focusLevel: 3, completedPlanned: false }),
+      makeSession({ endedAt: MON, durationMin: 60, focusLevel: 5, completedPlanned: true }),
+      makeSession({ endedAt: MON, durationMin: 60 }), // no reflection — excluded from denominator
+    ];
+    const data = computeInsights(
+      sessions,
+      { dateRange: "week", quickFilter: "all" },
+      REF_NOW
+    );
+    expect(data.summary.completedPlannedRate).toBeCloseTo(2 / 3, 5);
   });
 
   it("places sessions into the correct day bucket in the weekly trend", () => {

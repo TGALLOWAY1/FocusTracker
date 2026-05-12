@@ -123,7 +123,7 @@ export function ProjectDetailPage() {
       .map((e) => ({
         id: `session-${e.session.id}`,
         kind: "session_completed" as const,
-        title: e.session.task || e.session.project,
+        title: e.session.task || e.session.projectName,
         at: e.session.endedAt,
       }));
     return [...fromEvents, ...fromSessions]

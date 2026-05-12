@@ -1,23 +1,21 @@
-import { Home, Clock, Folder, Map, BarChart3, Plus, TrendingUp, PieChart } from "lucide-react";
+import { Home, Folder, Map, TrendingUp, PieChart } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 type BottomItem = {
   id: string;
   label: string;
   icon: typeof Home;
-  path: string | null;
+  path: string;
 };
 
 const ITEMS: BottomItem[] = [
   { id: "today", label: "Today", icon: Home, path: "/today" },
-  { id: "focus", label: "Focus", icon: Clock, path: null },
   { id: "projects", label: "Projects", icon: Folder, path: "/projects" },
   { id: "learning", label: "Learning Path", icon: Map, path: "/learning" },
 ];
 
 const ITEMS_RIGHT: BottomItem[] = [
   { id: "insights", label: "Insights", icon: PieChart, path: "/insights" },
-  { id: "progress", label: "Progress", icon: BarChart3, path: null },
 ];
 
 function BottomItem({ item }: { item: BottomItem }) {
@@ -30,15 +28,6 @@ function BottomItem({ item }: { item: BottomItem }) {
         ? "text-brand-purple"
         : "text-text-secondary hover:text-text-primary",
     ].join(" ");
-
-  if (item.path === null) {
-    return (
-      <div className={`${classFor(false)} cursor-default opacity-80`} aria-disabled="true">
-        <Icon size={18} strokeWidth={2} />
-        <span className="text-sm font-medium">{item.label}</span>
-      </div>
-    );
-  }
 
   return (
     <NavLink to={item.path} className={({ isActive }) => classFor(isActive)}>
@@ -55,18 +44,6 @@ export function BottomBar() {
         {ITEMS.map((item) => (
           <BottomItem key={item.id} item={item} />
         ))}
-      </div>
-
-      <div className="absolute left-1/2 -translate-x-1/2 -top-5">
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          title="Quick add — coming later"
-          className="w-12 h-12 rounded-full bg-brand-purple text-white flex items-center justify-center shadow-[0_8px_24px_-6px_rgba(139,124,246,0.5)] cursor-not-allowed"
-        >
-          <Plus size={22} strokeWidth={2.5} />
-        </button>
       </div>
 
       <div className="ml-auto flex items-center gap-1">

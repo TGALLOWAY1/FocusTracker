@@ -4,6 +4,7 @@ import { NAV_ITEMS } from "../../data/navItems";
 import { Card } from "../ui/Card";
 import { useFocusStore } from "../../state/focusStore";
 import { useWeeklyStats } from "../../state/useWeeklyStats";
+import { useStreaks } from "../../state/useStreaks";
 import { FOCUS_TIERS, getTier } from "../../data/focusTiers";
 import { clamp } from "../../utils/time";
 
@@ -54,35 +55,6 @@ function NavList() {
               : "text-text-secondary hover:bg-bg-cardHover hover:text-text-primary border border-transparent",
           ].join(" ");
 
-        const body = (active: boolean) => (
-          <>
-            <Icon
-              size={18}
-              className={active ? "text-brand-purple" : "text-text-secondary"}
-              strokeWidth={2}
-            />
-            <span className="text-sm font-medium flex-1">{item.label}</span>
-            {item.badge !== undefined && (
-              <span className="text-[11px] font-semibold text-text-secondary bg-bg-elevated rounded-md px-2 py-0.5">
-                {item.badge}
-              </span>
-            )}
-          </>
-        );
-
-        if (item.path === null) {
-          return (
-            <div
-              key={item.id}
-              aria-disabled="true"
-              title="Coming soon"
-              className={`${rowClasses(false)} cursor-default opacity-80`}
-            >
-              {body(false)}
-            </div>
-          );
-        }
-
         return (
           <NavLink
             key={item.id}
@@ -90,7 +62,16 @@ function NavList() {
             end={item.path === "/today"}
             className={({ isActive }) => rowClasses(isActive)}
           >
-            {({ isActive }) => body(isActive)}
+            {({ isActive }) => (
+              <>
+                <Icon
+                  size={18}
+                  className={isActive ? "text-brand-purple" : "text-text-secondary"}
+                  strokeWidth={2}
+                />
+                <span className="text-sm font-medium flex-1">{item.label}</span>
+              </>
+            )}
           </NavLink>
         );
       })}
@@ -209,8 +190,7 @@ function StreakRow({ value, unit, label, iconBg, iconColor, Icon }: StreakRowPro
 }
 
 function StreaksCard() {
-  const focusStreakDays = useFocusStore((s) => s.focusStreakDays);
-  const projectStreakDays = useFocusStore((s) => s.projectStreakDays);
+  const { focusStreakDays, projectStreakDays } = useStreaks();
   const weeklyStats = useWeeklyStats();
   const deepWorkHours = Math.floor(weeklyStats.totalMinutes / 60);
 

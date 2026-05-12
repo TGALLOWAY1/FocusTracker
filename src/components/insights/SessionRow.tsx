@@ -1,4 +1,4 @@
-import { CheckCircle2, AlertCircle, Star } from "lucide-react";
+import { CheckCircle2, AlertCircle, Star, Zap, Target } from "lucide-react";
 import { useProjectStore } from "../../state/projectStore";
 import { PROJECT_ICONS, projectColorClasses } from "../../data/projects";
 import { ACTIVITY_CATEGORIES } from "../../data/activityCategories";
@@ -28,6 +28,28 @@ function FocusRatingStars({ rating }: { rating: number }) {
                 ? "fill-accent-yellow text-accent-yellow"
                 : "text-border-strong"
             }
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function EnergyRatingDots({ rating }: { rating: number }) {
+  return (
+    <div
+      className="flex items-center gap-0.5"
+      aria-label={`Energy rating ${rating} of 5`}
+    >
+      <Zap size={11} strokeWidth={2.5} className="text-accent-orange mr-0.5" />
+      {[1, 2, 3, 4, 5].map((n) => {
+        const filled = n <= rating;
+        return (
+          <span
+            key={n}
+            className={`block w-1.5 h-1.5 rounded-full ${
+              filled ? "bg-accent-orange" : "bg-border-strong"
+            }`}
           />
         );
       })}
@@ -76,7 +98,7 @@ export function SessionRow({ entry }: { entry: LoggedSession }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-sm font-semibold text-text-primary truncate">
-              {session.project}
+              {session.projectName}
             </div>
             {session.task && (
               <div className="text-xs text-text-secondary truncate">
@@ -115,6 +137,17 @@ export function SessionRow({ entry }: { entry: LoggedSession }) {
 
           {reflection && reflection.focusLevel > 0 && (
             <FocusRatingStars rating={reflection.focusLevel} />
+          )}
+
+          {reflection && reflection.energyLevel > 0 && (
+            <EnergyRatingDots rating={reflection.energyLevel} />
+          )}
+
+          {reflection?.completedPlanned && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-brand-purpleSoft text-brand-purple">
+              <Target size={10} strokeWidth={2.5} />
+              On plan
+            </span>
           )}
 
           <span
