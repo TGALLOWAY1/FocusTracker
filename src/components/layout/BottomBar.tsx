@@ -12,7 +12,7 @@ const ITEMS: BottomItem[] = [
   { id: "today", label: "Today", icon: Home, path: "/today" },
   { id: "focus", label: "Focus", icon: Clock, path: null },
   { id: "projects", label: "Projects", icon: Folder, path: null },
-  { id: "learning", label: "Learning Path", icon: Map, path: null },
+  { id: "learning", label: "Learning Path", icon: Map, path: "/learning" },
 ];
 
 const ITEMS_RIGHT: BottomItem[] = [
