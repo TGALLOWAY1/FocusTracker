@@ -5,6 +5,8 @@ import {
   xpForSession,
   type CompletedSession,
 } from "./focusStore";
+import { useProjectStore } from "./projectStore";
+import type { Project } from "../data/projects";
 
 const SHORT_DURATION_SEC = 3;
 
@@ -31,7 +33,7 @@ function makeSession(
   return {
     id: "test",
     projectId: "test-project",
-    project: "Test",
+    projectName: "Test",
     task: "Test",
     startedAt: endedAt - actualDurationSec * 1000,
     endedAt,
@@ -92,6 +94,79 @@ describe("focusStore", () => {
     expect(state.sessionLog).toHaveLength(1);
     expect(state.sessionLog[0].reflection).toBeNull();
     expect(state.sessionLog[0].session.completedNaturally).toBe(false);
+  });
+
+  describe("projectName is a live snapshot from projectStore at completion time", () => {
+    function seedProject(id: string, name: string) {
+      const baseline: Project = {
+        id,
+        name,
+        description: "",
+        category: "",
+        status: "active",
+        tags: [],
+        weeklyMinutes: 0,
+        weeklyGoalMinutes: 600,
+        progressPercent: 0,
+        color: "purple",
+        iconKey: "code",
+        activityCategory: "other",
+        cover: { kind: "preset", preset: "nebula" },
+        manualEntries: [],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+      useProjectStore.setState({ projects: [baseline] });
+    }
+
+    it("snapshots the CURRENT projectStore name onto the completed session", () => {
+      seedProject("proj-x", "Original Name");
+      useFocusStore.setState({
+        projectId: "proj-x",
+        durationSec: 1,
+        remainingSec: 1,
+        status: "running",
+        sessionLog: [],
+        pendingReflectionFor: null,
+      });
+      useFocusStore.getState().tick();
+      const session = useFocusStore.getState().sessionLog[0].session;
+      expect(session.projectName).toBe("Original Name");
+      expect(session.projectId).toBe("proj-x");
+    });
+
+    it("a later rename does not retroactively change the snapshot", () => {
+      seedProject("proj-y", "Old Name");
+      useFocusStore.setState({
+        projectId: "proj-y",
+        durationSec: 1,
+        remainingSec: 1,
+        status: "running",
+        sessionLog: [],
+        pendingReflectionFor: null,
+      });
+      useFocusStore.getState().tick();
+      // Rename the project after the session is logged.
+      seedProject("proj-y", "New Name");
+      const session = useFocusStore.getState().sessionLog[0].session;
+      // The historical log keeps the old label — that's the whole point.
+      expect(session.projectName).toBe("Old Name");
+    });
+
+    it("falls back to 'Unknown Project' when projectId resolves to nothing", () => {
+      useProjectStore.setState({ projects: [] });
+      useFocusStore.setState({
+        projectId: "does-not-exist",
+        durationSec: 1,
+        remainingSec: 1,
+        status: "running",
+        sessionLog: [],
+        pendingReflectionFor: null,
+      });
+      useFocusStore.getState().tick();
+      const session = useFocusStore.getState().sessionLog[0].session;
+      expect(session.projectName).toBe("Unknown Project");
+    });
   });
 
   describe("xpForSession", () => {

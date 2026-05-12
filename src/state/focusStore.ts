@@ -33,7 +33,13 @@ export type SessionType = "deep" | "light" | "learning";
 export type CompletedSession = {
   id: string;
   projectId: string;
-  project: string;
+  /**
+   * Snapshot of the project's display name at the time the session ended.
+   * This is a historical label — never use it to look up the project.
+   * For the live name, read `useFocusProjectName()` or look up
+   * `useProjectStore().projects` by `projectId`.
+   */
+  projectName: string;
   task: string;
   startedAt: number;
   endedAt: number;
@@ -67,7 +73,6 @@ type ActiveProjectInput = {
 type FocusState = {
   status: SessionStatus;
   projectId: string;
-  project: string;
   task: string;
   durationSec: number;
   remainingSec: number;
@@ -103,6 +108,17 @@ function lookupActivityCategory(projectId: string): ActivityCategory {
     .getState()
     .projects.find((p) => p.id === projectId);
   return project?.activityCategory ?? "other";
+}
+
+// Resolves the project's current display name at the time of the call.
+// Used by buildCompletion to snapshot a historical label onto each
+// CompletedSession — that snapshot is what SessionRow / ProjectDetail
+// render later, so a project rename never rewrites past history.
+function lookupProjectName(projectId: string): string {
+  const project = useProjectStore
+    .getState()
+    .projects.find((p) => p.id === projectId);
+  return project?.name ?? "Unknown Project";
 }
 
 function deriveSessionType(
@@ -151,7 +167,7 @@ function buildCompletion(
   return {
     id: newId("session"),
     projectId: state.projectId,
-    project: state.project,
+    projectName: lookupProjectName(state.projectId),
     task: state.task,
     startedAt,
     endedAt,
@@ -199,7 +215,6 @@ export function applyXpAward(
 type PersistedFocus = Pick<
   FocusState,
   | "projectId"
-  | "project"
   | "task"
   | "durationSec"
   | "flags"
@@ -236,8 +251,10 @@ export const useFocusStore = create<FocusStore>()(
   persist(
     (set) => ({
       status: "idle" as SessionStatus,
-      projectId: "harmonia-ep",
-      project: "Harmonia EP",
+      // Must reference a real entry in projectStore's SEED_PROJECTS; before
+      // Slice 3 a hardcoded `project: "Harmonia EP"` label masked the fact
+      // that `projectId: "harmonia-ep"` didn't resolve to any seed.
+      projectId: "lofi-beats-collection",
       task: "Mixing and arrangement",
       durationSec: DEFAULT_DURATION_SEC,
       remainingSec: DEFAULT_DURATION_SEC,
@@ -269,8 +286,10 @@ export const useFocusStore = create<FocusStore>()(
           return { remainingSec: s.remainingSec - 1 };
         }),
 
-      setActiveProject: (project) =>
-        set({ projectId: project.id, project: project.name }),
+      // The `name` field on the input is accepted for caller ergonomics
+      // but intentionally ignored — the live name is derived from
+      // projectStore at read time, so a rename propagates everywhere.
+      setActiveProject: (project) => set({ projectId: project.id }),
       setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
       setTier: (tierId) => set({ currentTierId: tierId }),
       setXp: (xp) => set({ xp }),
@@ -281,7 +300,6 @@ export const useFocusStore = create<FocusStore>()(
           return {
             dailyPlan: plan,
             projectId: plan.projectId,
-            project: plan.projectName,
             task: plan.primaryTask,
             durationSec: newDurationSec,
             remainingSec:
@@ -316,11 +334,10 @@ export const useFocusStore = create<FocusStore>()(
     }),
     {
       name: "focus-ladder.focus",
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => localStorage),
       partialize: (state): PersistedFocus => ({
         projectId: state.projectId,
-        project: state.project,
         task: state.task,
         durationSec: state.durationSec,
         flags: state.flags,
@@ -329,20 +346,51 @@ export const useFocusStore = create<FocusStore>()(
         dailyPlan: state.dailyPlan,
         sessionLog: state.sessionLog,
       }),
-      // v2 -> v3 dropped focusStreakDays / projectStreakDays from persisted
-      // state (streaks are now derived from sessionLog at read time). Strip
-      // them so the persisted JSON stays clean.
+      // v2 -> v3 dropped focusStreakDays / projectStreakDays (streaks are
+      // derived from sessionLog at read time).
+      // v3 -> v4 dropped the top-level `project` (live name is derived
+      // from projectStore via useFocusProjectName) and renamed each
+      // sessionLog entry's `session.project` to `session.projectName`
+      // to make its snapshot-not-key semantics explicit.
       migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== "object") {
           return persistedState;
         }
+        const next: Record<string, unknown> = {
+          ...(persistedState as Record<string, unknown>),
+        };
         if (version < 3) {
-          const rest: Record<string, unknown> = { ...(persistedState as Record<string, unknown>) };
-          delete rest.focusStreakDays;
-          delete rest.projectStreakDays;
-          return rest;
+          delete next.focusStreakDays;
+          delete next.projectStreakDays;
         }
-        return persistedState;
+        if (version < 4) {
+          delete next.project;
+          // The legacy default `projectId` never resolved to a real seed
+          // project — rescue users whose persisted state still carries it.
+          if (next.projectId === "harmonia-ep") {
+            next.projectId = "lofi-beats-collection";
+          }
+          const log = next.sessionLog;
+          if (Array.isArray(log)) {
+            next.sessionLog = log.map((entry) => {
+              if (!entry || typeof entry !== "object") return entry;
+              const e = entry as { session?: Record<string, unknown> };
+              if (!e.session || typeof e.session !== "object") return entry;
+              const { project, ...rest } = e.session as {
+                project?: unknown;
+                projectName?: unknown;
+              } & Record<string, unknown>;
+              return {
+                ...entry,
+                session: {
+                  ...rest,
+                  projectName: rest.projectName ?? project ?? "Unknown Project",
+                },
+              };
+            });
+          }
+        }
+        return next;
       },
       // Always boot into idle on rehydration: a refresh mid-session
       // shouldn't resume a stale countdown, and a half-finished

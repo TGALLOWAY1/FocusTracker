@@ -50,7 +50,7 @@ function SessionSummary({ session }: { session: CompletedSession }) {
   return (
     <div className="rounded-xl border border-border-subtle bg-bg-elevated px-4 py-3 flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-xs text-text-muted">{session.project}</div>
+        <div className="text-xs text-text-muted">{session.projectName}</div>
         <div className="text-sm font-semibold text-text-primary truncate">
           {session.task || "Focus Session"}
         </div>

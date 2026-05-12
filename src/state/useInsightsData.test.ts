@@ -24,7 +24,7 @@ function makeSession(input: MakeSessionInput): LoggedSession {
   const session: CompletedSession = {
     id: `s-${input.endedAt}`,
     projectId: input.projectId ?? "p1",
-    project: "Test",
+    projectName: "Test",
     task: "Test",
     startedAt: input.endedAt - actualDurationSec * 1000,
     endedAt: input.endedAt,

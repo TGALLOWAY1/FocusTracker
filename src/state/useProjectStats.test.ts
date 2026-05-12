@@ -16,7 +16,7 @@ function makeSession(
   const session: CompletedSession = {
     id: `s-${endedAt}`,
     projectId,
-    project: "Test",
+    projectName: "Test",
     task: "Test",
     startedAt: endedAt - actualDurationSec * 1000,
     endedAt,

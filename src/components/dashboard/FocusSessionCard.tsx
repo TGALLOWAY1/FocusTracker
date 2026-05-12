@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useFocusStore, type SessionStatus } from "../../state/focusStore";
+import { useFocusProjectName } from "../../state/useFocusProjectName";
 import { formatMMSS } from "../../utils/time";
 
 function StatusDot({ status }: { status: SessionStatus }) {
@@ -195,7 +196,7 @@ function FlagsStrip() {
 
 function IdleState() {
   const start = useFocusStore((s) => s.start);
-  const project = useFocusStore((s) => s.project);
+  const project = useFocusProjectName();
   const durationSec = useFocusStore((s) => s.durationSec);
   return (
     <div className="relative h-[480px] flex flex-col items-center justify-center text-center px-8">
@@ -225,7 +226,7 @@ function IdleState() {
 
 function ActiveState() {
   const status = useFocusStore((s) => s.status);
-  const project = useFocusStore((s) => s.project);
+  const project = useFocusProjectName();
   const task = useFocusStore((s) => s.task);
   const remainingSec = useFocusStore((s) => s.remainingSec);
   const durationSec = useFocusStore((s) => s.durationSec);

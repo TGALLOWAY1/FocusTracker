@@ -69,14 +69,14 @@ function ProjectPill({
 }
 
 export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
-  const storeProject = useFocusStore((s) => s.project);
+  const storeProjectId = useFocusStore((s) => s.projectId);
   const storeTask = useFocusStore((s) => s.task);
   const storeDuration = useFocusStore((s) => s.durationSec);
   const setDailyPlan = useFocusStore((s) => s.setDailyPlan);
   const projects = useProjectStore((s) => s.projects);
 
   const defaultProjectId =
-    projects.find((p) => p.name === storeProject)?.id ??
+    projects.find((p) => p.id === storeProjectId)?.id ??
     projects[0]?.id ??
     "";
   const defaultDurationMin = Math.round(storeDuration / 60);

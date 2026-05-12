@@ -98,7 +98,7 @@ export function SessionRow({ entry }: { entry: LoggedSession }) {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="text-sm font-semibold text-text-primary truncate">
-              {session.project}
+              {session.projectName}
             </div>
             {session.task && (
               <div className="text-xs text-text-secondary truncate">
