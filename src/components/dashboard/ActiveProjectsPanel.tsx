@@ -11,8 +11,11 @@ import { formatHM } from "../../utils/time";
 
 const FOCUS_SESSION_CARD_ID = "focus-session-card";
 
-function selectProject(name: string, setProject: (n: string) => void) {
-  setProject(name);
+function selectProject(
+  project: Project,
+  setActiveProject: (p: { id: string; name: string }) => void
+) {
+  setActiveProject({ id: project.id, name: project.name });
   const target = document.getElementById(FOCUS_SESSION_CARD_ID);
   target?.scrollIntoView({ behavior: "smooth", block: "center" });
 }
@@ -21,13 +24,13 @@ function ProjectRow({ project }: { project: Project }) {
   const colors = projectColorClasses(project.color);
   const Icon = PROJECT_ICONS[project.iconKey];
   const progress = project.weeklyMinutes / project.weeklyGoalMinutes;
-  const setProject = useFocusStore((s) => s.setProject);
+  const setActiveProject = useFocusStore((s) => s.setActiveProject);
 
   return (
     <li>
       <button
         type="button"
-        onClick={() => selectProject(project.name, setProject)}
+        onClick={() => selectProject(project, setActiveProject)}
         aria-label={`Start a focus session for ${project.name}`}
         className="w-full flex items-center gap-3 py-2.5 px-1 -mx-1 rounded-xl text-left hover:bg-bg-cardHover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60 transition-colors"
       >

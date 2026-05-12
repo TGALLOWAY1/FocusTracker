@@ -27,7 +27,7 @@ export const useProjectStore = create<ProjectStore>()(
     }),
     {
       name: "focus-ladder.projects",
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => localStorage),
     }
   )

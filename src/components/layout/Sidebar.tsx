@@ -1,5 +1,6 @@
 import { ChevronRight, Flame, Target, Star } from "lucide-react";
-import { NAV_ITEMS, ACTIVE_NAV_ID } from "../../data/navItems";
+import { NavLink } from "react-router-dom";
+import { NAV_ITEMS } from "../../data/navItems";
 import { Card } from "../ui/Card";
 import { useFocusStore } from "../../state/focusStore";
 import { useWeeklyStats } from "../../state/useWeeklyStats";
@@ -44,17 +45,17 @@ function NavList() {
     <nav className="mt-6 flex flex-col gap-1 px-2">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
-        const active = item.id === ACTIVE_NAV_ID;
-        return (
-          <div
-            key={item.id}
-            className={[
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-default select-none transition-colors",
-              active
-                ? "bg-brand-purpleSoft text-text-primary border border-brand-purple/20"
-                : "text-text-secondary hover:bg-bg-cardHover hover:text-text-primary border border-transparent",
-            ].join(" ")}
-          >
+
+        const rowClasses = (active: boolean) =>
+          [
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl select-none transition-colors",
+            active
+              ? "bg-brand-purpleSoft text-text-primary border border-brand-purple/20"
+              : "text-text-secondary hover:bg-bg-cardHover hover:text-text-primary border border-transparent",
+          ].join(" ");
+
+        const body = (active: boolean) => (
+          <>
             <Icon
               size={18}
               className={active ? "text-brand-purple" : "text-text-secondary"}
@@ -66,7 +67,31 @@ function NavList() {
                 {item.badge}
               </span>
             )}
-          </div>
+          </>
+        );
+
+        if (item.path === null) {
+          return (
+            <div
+              key={item.id}
+              aria-disabled="true"
+              title="Coming soon"
+              className={`${rowClasses(false)} cursor-default opacity-80`}
+            >
+              {body(false)}
+            </div>
+          );
+        }
+
+        return (
+          <NavLink
+            key={item.id}
+            to={item.path}
+            end={item.path === "/today"}
+            className={({ isActive }) => rowClasses(isActive)}
+          >
+            {({ isActive }) => body(isActive)}
+          </NavLink>
         );
       })}
     </nav>

@@ -1,37 +1,50 @@
-import { Home, Clock, Folder, Map, BarChart3, Plus, TrendingUp } from "lucide-react";
+import { Home, Clock, Folder, Map, BarChart3, Plus, TrendingUp, PieChart } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 type BottomItem = {
   id: string;
   label: string;
   icon: typeof Home;
+  path: string | null;
 };
 
 const ITEMS: BottomItem[] = [
-  { id: "today", label: "Today", icon: Home },
-  { id: "focus", label: "Focus", icon: Clock },
-  { id: "projects", label: "Projects", icon: Folder },
-  { id: "learning", label: "Learning Path", icon: Map },
+  { id: "today", label: "Today", icon: Home, path: "/today" },
+  { id: "focus", label: "Focus", icon: Clock, path: null },
+  { id: "projects", label: "Projects", icon: Folder, path: null },
+  { id: "learning", label: "Learning Path", icon: Map, path: null },
 ];
 
 const ITEMS_RIGHT: BottomItem[] = [
-  { id: "progress", label: "Progress", icon: BarChart3 },
+  { id: "insights", label: "Insights", icon: PieChart, path: "/insights" },
+  { id: "progress", label: "Progress", icon: BarChart3, path: null },
 ];
-
-const ACTIVE = "today";
 
 function BottomItem({ item }: { item: BottomItem }) {
   const Icon = item.icon;
-  const active = item.id === ACTIVE;
+
+  const classFor = (active: boolean) =>
+    [
+      "flex items-center gap-2 px-3 py-2 rounded-xl select-none transition-colors",
+      active
+        ? "text-brand-purple"
+        : "text-text-secondary hover:text-text-primary",
+    ].join(" ");
+
+  if (item.path === null) {
+    return (
+      <div className={`${classFor(false)} cursor-default opacity-80`} aria-disabled="true">
+        <Icon size={18} strokeWidth={2} />
+        <span className="text-sm font-medium">{item.label}</span>
+      </div>
+    );
+  }
+
   return (
-    <div
-      className={[
-        "flex items-center gap-2 px-3 py-2 rounded-xl cursor-default select-none",
-        active ? "text-brand-purple" : "text-text-secondary hover:text-text-primary",
-      ].join(" ")}
-    >
+    <NavLink to={item.path} className={({ isActive }) => classFor(isActive)}>
       <Icon size={18} strokeWidth={2} />
       <span className="text-sm font-medium">{item.label}</span>
-    </div>
+    </NavLink>
   );
 }
 

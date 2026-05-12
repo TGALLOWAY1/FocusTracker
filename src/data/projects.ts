@@ -1,4 +1,5 @@
 import { Music, BookOpen, Code2, type LucideIcon } from "lucide-react";
+import type { ActivityCategory } from "./activityCategories";
 
 export type ProjectColor = "purple" | "green" | "orange";
 
@@ -18,6 +19,7 @@ export type Project = {
   weeklyGoalMinutes: number;
   color: ProjectColor;
   iconKey: ProjectIconKey;
+  activityCategory: ActivityCategory;
 };
 
 export const SEED_PROJECTS: Project[] = [
@@ -29,6 +31,7 @@ export const SEED_PROJECTS: Project[] = [
     weeklyGoalMinutes: 1000,
     color: "purple",
     iconKey: "music",
+    activityCategory: "music",
   },
   {
     id: "ml-path",
@@ -38,6 +41,7 @@ export const SEED_PROJECTS: Project[] = [
     weeklyGoalMinutes: 750,
     color: "green",
     iconKey: "book",
+    activityCategory: "learning",
   },
   {
     id: "synapse",
@@ -47,6 +51,7 @@ export const SEED_PROJECTS: Project[] = [
     weeklyGoalMinutes: 880,
     color: "orange",
     iconKey: "code",
+    activityCategory: "coding",
   },
 ];
 

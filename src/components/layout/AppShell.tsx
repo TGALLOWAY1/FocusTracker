@@ -1,7 +1,8 @@
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
-import { MainContent } from "./MainContent";
-import { RightPanel } from "./RightPanel";
+import { TodayPage } from "./TodayPage";
 import { BottomBar } from "./BottomBar";
+import { InsightsPage } from "../insights/InsightsPage";
 
 export function AppShell() {
   return (
@@ -16,8 +17,12 @@ export function AppShell() {
         "
       >
         <Sidebar />
-        <MainContent />
-        <RightPanel />
+        <Routes>
+          <Route path="/" element={<Navigate to="/today" replace />} />
+          <Route path="/today" element={<TodayPage />} />
+          <Route path="/insights" element={<InsightsPage />} />
+          <Route path="*" element={<Navigate to="/today" replace />} />
+        </Routes>
       </div>
       <BottomBar />
     </div>

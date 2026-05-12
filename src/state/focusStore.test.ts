@@ -27,14 +27,20 @@ function makeSession(
   actualDurationSec: number,
   completedNaturally: boolean
 ): CompletedSession {
+  const endedAt = Date.now();
   return {
     id: "test",
+    projectId: "test-project",
     project: "Test",
     task: "Test",
+    startedAt: endedAt - actualDurationSec * 1000,
+    endedAt,
     plannedDurationSec: actualDurationSec,
     actualDurationSec,
-    endedAt: Date.now(),
     completedNaturally,
+    activityCategory: "other",
+    sessionType: "light",
+    tags: [],
   };
 }
 

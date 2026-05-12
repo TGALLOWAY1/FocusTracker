@@ -93,14 +93,14 @@ export function SessionReflectionModal() {
 
   const [focusLevel, setFocusLevel] = useState(0);
   const [energyLevel, setEnergyLevel] = useState(0);
-  const [distraction, setDistraction] = useState("");
+  const [reflectionText, setReflectionText] = useState("");
   const [completedPlanned, setCompletedPlanned] = useState(false);
 
   useEffect(() => {
     if (!pending) return;
     setFocusLevel(0);
     setEnergyLevel(0);
-    setDistraction("");
+    setReflectionText("");
     setCompletedPlanned(pending.completedNaturally);
   }, [pending?.id, pending]);
 
@@ -114,7 +114,7 @@ export function SessionReflectionModal() {
       sessionId: pending.id,
       focusLevel,
       energyLevel,
-      biggestDistraction: distraction.trim() || undefined,
+      reflection: reflectionText.trim() || undefined,
       completedPlanned,
       createdAt: Date.now(),
     });
@@ -159,12 +159,13 @@ export function SessionReflectionModal() {
         </div>
 
         <div>
-          <FieldLabel optional>Biggest distraction</FieldLabel>
-          <input
-            value={distraction}
-            onChange={(e) => setDistraction(e.target.value)}
-            placeholder="What pulled at your attention?"
-            className="w-full bg-bg-elevated border border-border-subtle rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none focus:border-brand-purple/50 transition-colors"
+          <FieldLabel optional>Reflection</FieldLabel>
+          <textarea
+            value={reflectionText}
+            onChange={(e) => setReflectionText(e.target.value)}
+            placeholder="What stood out? How did this session feel?"
+            rows={3}
+            className="w-full bg-bg-elevated border border-border-subtle rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none focus:border-brand-purple/50 transition-colors resize-none"
           />
         </div>
 
