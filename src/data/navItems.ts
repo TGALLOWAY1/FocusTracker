@@ -21,7 +21,7 @@ export type NavItem = {
 export const NAV_ITEMS: NavItem[] = [
   { id: "today", label: "Today", icon: Home, path: "/today" },
   { id: "focus", label: "Focus Sessions", icon: Clock, path: null },
-  { id: "projects", label: "Projects", icon: Folder, path: null },
+  { id: "projects", label: "Projects", icon: Folder, path: "/projects" },
   { id: "learning", label: "Learning Path", icon: Map, path: "/learning" },
   { id: "progress", label: "Progress", icon: BarChart3, path: null },
   { id: "insights", label: "Insights", icon: PieChart, path: "/insights" },
