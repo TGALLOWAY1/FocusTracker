@@ -106,6 +106,48 @@ export type ManualEntry = {
   note?: string;
 };
 
+export type ProjectTask = {
+  id: string;
+  title: string;
+  completed: boolean;
+  category?: string;
+  dueDate?: string;
+  createdAt: number;
+};
+
+export type ProjectNote = {
+  id: string;
+  title: string;
+  body: string;
+  pinned?: boolean;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type ProjectLinkIcon = "github" | "notion" | "drive" | "link";
+
+export type ProjectLink = {
+  id: string;
+  title: string;
+  url: string;
+  icon?: ProjectLinkIcon;
+};
+
+export type ProjectEventKind =
+  | "session_completed"
+  | "task_added"
+  | "task_completed"
+  | "note_added"
+  | "note_updated"
+  | "project_updated";
+
+export type ProjectEvent = {
+  id: string;
+  kind: ProjectEventKind;
+  title: string;
+  at: number;
+};
+
 export type Project = {
   id: string;
   name: string;
@@ -121,6 +163,10 @@ export type Project = {
   activityCategory: ActivityCategory;
   cover: ProjectCover;
   manualEntries: ManualEntry[];
+  tasks?: ProjectTask[];
+  notes?: ProjectNote[];
+  links?: ProjectLink[];
+  events?: ProjectEvent[];
   createdAt: number;
   updatedAt: number;
 };
@@ -136,7 +182,7 @@ export const SEED_PROJECTS: Project[] = [
       "Build and train custom ML models with visualizations and experiment tracking.",
     category: "Deep Learning Specialization",
     status: "active",
-    tags: ["Deep Work", "Machine Learning"],
+    tags: ["Deep Work", "Machine Learning", "Python", "Data Science", "AI"],
     weeklyMinutes: 6 * 60 + 15,
     weeklyGoalMinutes: 750,
     progressPercent: 75,
@@ -150,6 +196,119 @@ export const SEED_PROJECTS: Project[] = [
         minutes: 42 * 60 + 15,
         addedAt: SEED_NOW - 2 * DAY_MS,
         note: "Imported historical training time",
+      },
+    ],
+    tasks: [
+      {
+        id: "seed-ml-task-1",
+        title: "Define project goals and success metrics",
+        completed: true,
+        category: "Planning",
+        dueDate: new Date(SEED_NOW - 22 * DAY_MS).toISOString().slice(0, 10),
+        createdAt: SEED_NOW - 30 * DAY_MS,
+      },
+      {
+        id: "seed-ml-task-2",
+        title: "Collect and explore dataset",
+        completed: true,
+        category: "Data",
+        dueDate: new Date(SEED_NOW - 18 * DAY_MS).toISOString().slice(0, 10),
+        createdAt: SEED_NOW - 28 * DAY_MS,
+      },
+      {
+        id: "seed-ml-task-3",
+        title: "Data cleaning and preprocessing",
+        completed: true,
+        category: "Data",
+        dueDate: new Date(SEED_NOW - 12 * DAY_MS).toISOString().slice(0, 10),
+        createdAt: SEED_NOW - 26 * DAY_MS,
+      },
+      {
+        id: "seed-ml-task-4",
+        title: "Build baseline model",
+        completed: false,
+        category: "Modeling",
+        dueDate: new Date(SEED_NOW).toISOString().slice(0, 10),
+        createdAt: SEED_NOW - 20 * DAY_MS,
+      },
+      {
+        id: "seed-ml-task-5",
+        title: "Hyperparameter tuning",
+        completed: false,
+        category: "Modeling",
+        dueDate: new Date(SEED_NOW + 7 * DAY_MS).toISOString().slice(0, 10),
+        createdAt: SEED_NOW - 16 * DAY_MS,
+      },
+      {
+        id: "seed-ml-task-6",
+        title: "Model evaluation and comparison",
+        completed: false,
+        category: "Evaluation",
+        dueDate: new Date(SEED_NOW + 11 * DAY_MS).toISOString().slice(0, 10),
+        createdAt: SEED_NOW - 14 * DAY_MS,
+      },
+    ],
+    notes: [
+      {
+        id: "seed-ml-note-1",
+        title: "Current Focus",
+        body: "Improve model generalization. Next step is hyperparameter tuning and cross-validation.",
+        pinned: true,
+        createdAt: SEED_NOW - 3 * DAY_MS,
+        updatedAt: SEED_NOW - 3 * DAY_MS,
+      },
+      {
+        id: "seed-ml-note-2",
+        title: "Ideas",
+        body: "Try XGBoost and compare with LightGBM.",
+        createdAt: SEED_NOW - 7 * DAY_MS,
+        updatedAt: SEED_NOW - 7 * DAY_MS,
+      },
+    ],
+    links: [
+      {
+        id: "seed-ml-link-1",
+        title: "GitHub Repository",
+        url: "https://github.com/example/ml-model-trainer",
+        icon: "github",
+      },
+      {
+        id: "seed-ml-link-2",
+        title: "Notion Project Page",
+        url: "https://notion.so/example-ml-trainer",
+        icon: "notion",
+      },
+      {
+        id: "seed-ml-link-3",
+        title: "Dataset (Drive)",
+        url: "https://drive.google.com/example-dataset",
+        icon: "drive",
+      },
+    ],
+    events: [
+      {
+        id: "seed-ml-evt-1",
+        kind: "session_completed",
+        title: "Train baseline model (Random Forest)",
+        at: SEED_NOW - 4 * 60 * 60 * 1000,
+      },
+      {
+        id: "seed-ml-evt-2",
+        kind: "note_added",
+        title: "Experiment results - May 15",
+        at: SEED_NOW - 5 * 60 * 60 * 1000,
+      },
+      {
+        id: "seed-ml-evt-3",
+        kind: "task_completed",
+        title: "Data cleaning and preprocessing",
+        at: SEED_NOW - 2 * DAY_MS,
+      },
+      {
+        id: "seed-ml-evt-4",
+        kind: "project_updated",
+        title: "Description changed",
+        at: SEED_NOW - 3 * DAY_MS,
       },
     ],
     createdAt: SEED_NOW - 60 * DAY_MS,
@@ -175,6 +334,56 @@ export const SEED_PROJECTS: Project[] = [
         minutes: 28 * 60 + 30,
         addedAt: SEED_NOW - 5 * DAY_MS,
         note: "Imported historical build time",
+      },
+    ],
+    tasks: [
+      {
+        id: "seed-hg-task-1",
+        title: "Sketch core habit loop",
+        completed: true,
+        category: "Design",
+        createdAt: SEED_NOW - 20 * DAY_MS,
+      },
+      {
+        id: "seed-hg-task-2",
+        title: "Wire up streak persistence",
+        completed: false,
+        category: "Engineering",
+        dueDate: new Date(SEED_NOW + 3 * DAY_MS).toISOString().slice(0, 10),
+        createdAt: SEED_NOW - 10 * DAY_MS,
+      },
+      {
+        id: "seed-hg-task-3",
+        title: "Ship daily reminders",
+        completed: false,
+        category: "Engineering",
+        createdAt: SEED_NOW - 6 * DAY_MS,
+      },
+    ],
+    notes: [
+      {
+        id: "seed-hg-note-1",
+        title: "Current Focus",
+        body: "Make the streak counter feel rewarding without becoming stressful.",
+        pinned: true,
+        createdAt: SEED_NOW - 4 * DAY_MS,
+        updatedAt: SEED_NOW - 4 * DAY_MS,
+      },
+    ],
+    links: [
+      {
+        id: "seed-hg-link-1",
+        title: "GitHub Repository",
+        url: "https://github.com/example/habit-garden",
+        icon: "github",
+      },
+    ],
+    events: [
+      {
+        id: "seed-hg-evt-1",
+        kind: "session_completed",
+        title: "Streak persistence prototype",
+        at: SEED_NOW - 5 * DAY_MS,
       },
     ],
     createdAt: SEED_NOW - 45 * DAY_MS,
@@ -203,6 +412,34 @@ export const SEED_PROJECTS: Project[] = [
         note: "Imported historical design time",
       },
     ],
+    tasks: [
+      {
+        id: "seed-pr-task-1",
+        title: "Choose hero typography",
+        completed: true,
+        category: "Design",
+        createdAt: SEED_NOW - 14 * DAY_MS,
+      },
+      {
+        id: "seed-pr-task-2",
+        title: "Build case study template",
+        completed: false,
+        category: "Design",
+        createdAt: SEED_NOW - 7 * DAY_MS,
+      },
+    ],
+    notes: [
+      {
+        id: "seed-pr-note-1",
+        title: "Current Focus",
+        body: "Get the case study layout feeling editorial, not corporate.",
+        pinned: true,
+        createdAt: SEED_NOW - 2 * DAY_MS,
+        updatedAt: SEED_NOW - 2 * DAY_MS,
+      },
+    ],
+    links: [],
+    events: [],
     createdAt: SEED_NOW - 30 * DAY_MS,
     updatedAt: SEED_NOW - 1 * DAY_MS,
   },
@@ -229,6 +466,25 @@ export const SEED_PROJECTS: Project[] = [
         note: "Imported historical study time",
       },
     ],
+    tasks: [
+      {
+        id: "seed-dsh-task-1",
+        title: "Summarize probability chapter",
+        completed: true,
+        category: "Reading",
+        createdAt: SEED_NOW - 12 * DAY_MS,
+      },
+      {
+        id: "seed-dsh-task-2",
+        title: "Compile pandas cheatsheet",
+        completed: false,
+        category: "Writing",
+        createdAt: SEED_NOW - 4 * DAY_MS,
+      },
+    ],
+    notes: [],
+    links: [],
+    events: [],
     createdAt: SEED_NOW - 90 * DAY_MS,
     updatedAt: SEED_NOW - 1 * DAY_MS,
   },
@@ -255,6 +511,18 @@ export const SEED_PROJECTS: Project[] = [
         note: "Imported historical hacking time",
       },
     ],
+    tasks: [
+      {
+        id: "seed-cli-task-1",
+        title: "Scaffold command parser",
+        completed: false,
+        category: "Engineering",
+        createdAt: SEED_NOW - 6 * DAY_MS,
+      },
+    ],
+    notes: [],
+    links: [],
+    events: [],
     createdAt: SEED_NOW - 21 * DAY_MS,
     updatedAt: SEED_NOW - 2 * DAY_MS,
   },
@@ -281,6 +549,18 @@ export const SEED_PROJECTS: Project[] = [
         note: "Imported historical studio time",
       },
     ],
+    tasks: [
+      {
+        id: "seed-lofi-task-1",
+        title: "Record a rainy-day loop",
+        completed: false,
+        category: "Production",
+        createdAt: SEED_NOW - 5 * DAY_MS,
+      },
+    ],
+    notes: [],
+    links: [],
+    events: [],
     createdAt: SEED_NOW - 14 * DAY_MS,
     updatedAt: SEED_NOW - 3 * DAY_MS,
   },

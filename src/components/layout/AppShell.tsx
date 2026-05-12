@@ -5,6 +5,7 @@ import { BottomBar } from "./BottomBar";
 import { InsightsPage } from "../insights/InsightsPage";
 import { LearningPathPage } from "../learning/LearningPathPage";
 import { ProjectsPage } from "../projects/ProjectsPage";
+import { ProjectDetailPage } from "../projects/detail/ProjectDetailPage";
 
 export function AppShell() {
   return (
@@ -23,6 +24,7 @@ export function AppShell() {
           <Route path="/" element={<Navigate to="/today" replace />} />
           <Route path="/today" element={<TodayPage />} />
           <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
           <Route path="/learning" element={<LearningPathPage />} />
           <Route path="/insights" element={<InsightsPage />} />
           <Route path="*" element={<Navigate to="/today" replace />} />
