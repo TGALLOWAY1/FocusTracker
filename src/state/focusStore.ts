@@ -75,8 +75,6 @@ type FocusState = {
   flags: Flags;
   currentTierId: number;
   xp: number;
-  focusStreakDays: number;
-  projectStreakDays: number;
   dailyPlan: DailyPlan | null;
   pendingReflectionFor: CompletedSession | null;
   sessionLog: LoggedSession[];
@@ -92,8 +90,6 @@ type FocusActions = {
   setDuration: (sec: number) => void;
   setTier: (tierId: number) => void;
   setXp: (xp: number) => void;
-  setFocusStreak: (days: number) => void;
-  setProjectStreak: (days: number) => void;
   setDailyPlan: (plan: DailyPlan) => void;
   clearDailyPlan: () => void;
   submitReflection: (reflection: SessionReflection) => void;
@@ -209,8 +205,6 @@ type PersistedFocus = Pick<
   | "flags"
   | "currentTierId"
   | "xp"
-  | "focusStreakDays"
-  | "projectStreakDays"
   | "dailyPlan"
   | "sessionLog"
 >;
@@ -232,8 +226,6 @@ export const useFocusStore = create<FocusStore>()(
       },
       currentTierId: 1,
       xp: 0,
-      focusStreakDays: 0,
-      projectStreakDays: 0,
       dailyPlan: null,
       pendingReflectionFor: null,
       sessionLog: [],
@@ -268,8 +260,6 @@ export const useFocusStore = create<FocusStore>()(
       setDuration: (sec) => set({ durationSec: sec, remainingSec: sec }),
       setTier: (tierId) => set({ currentTierId: tierId }),
       setXp: (xp) => set({ xp }),
-      setFocusStreak: (days) => set({ focusStreakDays: days }),
-      setProjectStreak: (days) => set({ projectStreakDays: days }),
 
       setDailyPlan: (plan) =>
         set((s) => {
@@ -322,7 +312,7 @@ export const useFocusStore = create<FocusStore>()(
     }),
     {
       name: "focus-ladder.focus",
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => localStorage),
       partialize: (state): PersistedFocus => ({
         projectId: state.projectId,
@@ -332,11 +322,24 @@ export const useFocusStore = create<FocusStore>()(
         flags: state.flags,
         currentTierId: state.currentTierId,
         xp: state.xp,
-        focusStreakDays: state.focusStreakDays,
-        projectStreakDays: state.projectStreakDays,
         dailyPlan: state.dailyPlan,
         sessionLog: state.sessionLog,
       }),
+      // v2 -> v3 dropped focusStreakDays / projectStreakDays from persisted
+      // state (streaks are now derived from sessionLog at read time). Strip
+      // them so the persisted JSON stays clean.
+      migrate: (persistedState, version) => {
+        if (!persistedState || typeof persistedState !== "object") {
+          return persistedState;
+        }
+        if (version < 3) {
+          const rest: Record<string, unknown> = { ...(persistedState as Record<string, unknown>) };
+          delete rest.focusStreakDays;
+          delete rest.projectStreakDays;
+          return rest;
+        }
+        return persistedState;
+      },
       // Always boot into idle on rehydration: a refresh mid-session
       // shouldn't resume a stale countdown, and a half-finished
       // reflection shouldn't reappear if the user closed the tab.
