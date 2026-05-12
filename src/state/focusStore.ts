@@ -209,6 +209,29 @@ type PersistedFocus = Pick<
   | "sessionLog"
 >;
 
+// Applies the lifecycle side-effects of a completed session: appends the
+// session to `sessionLog` with `reflection: null` (committed immediately so
+// a page refresh between completion and reflection-submit doesn't lose the
+// work), awards XP, and sets `pendingReflectionFor` so the reflection
+// modal can attach to the just-completed session. Subsequent
+// submit/dismiss only update the reflection field in place.
+function applyCompletion(state: FocusState, completedNaturally: boolean) {
+  const completion = buildCompletion(state, completedNaturally);
+  const award = xpForSession(completion);
+  const next = applyXpAward(state.currentTierId, state.xp, award);
+  return {
+    status: "idle" as SessionStatus,
+    remainingSec: state.durationSec,
+    pendingReflectionFor: completion,
+    currentTierId: next.currentTierId,
+    xp: next.xp,
+    sessionLog: [
+      { session: completion, reflection: null },
+      ...state.sessionLog,
+    ],
+  };
+}
+
 export const useFocusStore = create<FocusStore>()(
   persist(
     (set) => ({
@@ -235,22 +258,13 @@ export const useFocusStore = create<FocusStore>()(
       pause: () => set({ status: "paused" }),
       resume: () => set({ status: "running" }),
 
-      end: () =>
-        set((s) => ({
-          status: "idle",
-          remainingSec: s.durationSec,
-          pendingReflectionFor: buildCompletion(s, false),
-        })),
+      end: () => set((s) => applyCompletion(s, false)),
 
       tick: () =>
         set((s) => {
           if (s.status !== "running") return s;
           if (s.remainingSec <= 1) {
-            return {
-              status: "idle",
-              remainingSec: s.durationSec,
-              pendingReflectionFor: buildCompletion(s, true),
-            };
+            return applyCompletion(s, true);
           }
           return { remainingSec: s.remainingSec - 1 };
         }),
@@ -278,37 +292,27 @@ export const useFocusStore = create<FocusStore>()(
         }),
       clearDailyPlan: () => set({ dailyPlan: null }),
 
+      // The session was already appended to `sessionLog` (with
+      // `reflection: null`) and XP was already awarded at completion.
+      // We just attach the reflection to the matching log entry, then
+      // clear the pending pointer that drove the modal.
       submitReflection: (reflection) =>
         set((s) => {
           if (!s.pendingReflectionFor) return s;
-          const award = xpForSession(s.pendingReflectionFor);
-          const next = applyXpAward(s.currentTierId, s.xp, award);
+          const targetId = s.pendingReflectionFor.id;
           return {
             pendingReflectionFor: null,
-            currentTierId: next.currentTierId,
-            xp: next.xp,
-            sessionLog: [
-              { session: s.pendingReflectionFor, reflection },
-              ...s.sessionLog,
-            ],
+            sessionLog: s.sessionLog.map((entry) =>
+              entry.session.id === targetId
+                ? { ...entry, reflection }
+                : entry
+            ),
           };
         }),
 
-      dismissReflection: () =>
-        set((s) => {
-          if (!s.pendingReflectionFor) return s;
-          const award = xpForSession(s.pendingReflectionFor);
-          const next = applyXpAward(s.currentTierId, s.xp, award);
-          return {
-            pendingReflectionFor: null,
-            currentTierId: next.currentTierId,
-            xp: next.xp,
-            sessionLog: [
-              { session: s.pendingReflectionFor, reflection: null },
-              ...s.sessionLog,
-            ],
-          };
-        }),
+      // Skipping reflection is a UX opt-out, not a forfeit. The session
+      // and XP are already committed; just close the modal.
+      dismissReflection: () => set({ pendingReflectionFor: null }),
     }),
     {
       name: "focus-ladder.focus",

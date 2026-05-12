@@ -71,6 +71,29 @@ describe("focusStore", () => {
     );
   });
 
+  it("tick() to completion commits the session to sessionLog with reflection: null", () => {
+    const { start, tick } = useFocusStore.getState();
+    start();
+    for (let i = 0; i < SHORT_DURATION_SEC; i++) {
+      tick();
+    }
+    const state = useFocusStore.getState();
+    expect(state.sessionLog).toHaveLength(1);
+    expect(state.sessionLog[0].reflection).toBeNull();
+    expect(state.sessionLog[0].session.id).toBe(state.pendingReflectionFor?.id);
+  });
+
+  it("end() before timer completion also commits the session immediately", () => {
+    const { start, tick, end } = useFocusStore.getState();
+    start();
+    tick(); // burn 1 second
+    end();
+    const state = useFocusStore.getState();
+    expect(state.sessionLog).toHaveLength(1);
+    expect(state.sessionLog[0].reflection).toBeNull();
+    expect(state.sessionLog[0].session.completedNaturally).toBe(false);
+  });
+
   describe("xpForSession", () => {
     it("awards 0 XP for an early-ended sub-minute session", () => {
       expect(xpForSession(makeSession(30, false))).toBe(0);
@@ -117,46 +140,92 @@ describe("focusStore", () => {
     });
   });
 
-  describe("submitReflection / dismissReflection award XP and advance tiers", () => {
+  describe("session lifecycle: XP awarded at completion, reflection attached after", () => {
     function queueNaturalCompletion(actualSec: number) {
-      // Drive a real natural completion through tick() so pendingReflectionFor
+      // Drive a real natural completion through tick() so the lifecycle
       // matches what production code produces.
       useFocusStore.setState({
         durationSec: actualSec,
         remainingSec: actualSec,
         status: "running",
         pendingReflectionFor: null,
+        sessionLog: [],
       });
       const { tick } = useFocusStore.getState();
       for (let i = 0; i < actualSec; i++) tick();
     }
 
-    it("submitReflection awards xpForSession(pending) and rolls into the next tier", () => {
+    it("tick() to completion awards xpForSession and rolls into the next tier", () => {
       useFocusStore.setState({ currentTierId: 1, xp: 248 });
       queueNaturalCompletion(60);
-      const { submitReflection } = useFocusStore.getState();
-      submitReflection({
-        sessionId: "test",
-        focusLevel: 4,
-        energyLevel: 4,
-        completedPlanned: true,
-        createdAt: Date.now(),
-      });
       const state = useFocusStore.getState();
       // 1 min × 1 + 5 bonus = 6. 248 + 6 = 254 → tier 2, xp 4.
       expect(state.currentTierId).toBe(2);
       expect(state.xp).toBe(4);
       expect(state.sessionLog).toHaveLength(1);
-      expect(state.sessionLog[0].reflection).not.toBeNull();
     });
 
-    it("dismissReflection still awards XP", () => {
+    it("submitReflection updates the existing log entry in place (no duplicate)", () => {
+      useFocusStore.setState({ currentTierId: 1, xp: 0 });
+      queueNaturalCompletion(60);
+      const sessionId = useFocusStore.getState().pendingReflectionFor!.id;
+      const { submitReflection } = useFocusStore.getState();
+      submitReflection({
+        sessionId,
+        focusLevel: 4,
+        energyLevel: 3,
+        completedPlanned: true,
+        createdAt: Date.now(),
+      });
+      const state = useFocusStore.getState();
+      expect(state.sessionLog).toHaveLength(1);
+      expect(state.sessionLog[0].reflection).not.toBeNull();
+      expect(state.sessionLog[0].reflection?.focusLevel).toBe(4);
+      expect(state.pendingReflectionFor).toBeNull();
+    });
+
+    it("submitReflection does not re-award XP (already awarded at completion)", () => {
+      useFocusStore.setState({ currentTierId: 1, xp: 0 });
+      queueNaturalCompletion(60);
+      const xpAfterCompletion = useFocusStore.getState().xp;
+      const sessionId = useFocusStore.getState().pendingReflectionFor!.id;
+      const { submitReflection } = useFocusStore.getState();
+      submitReflection({
+        sessionId,
+        focusLevel: 5,
+        energyLevel: 5,
+        completedPlanned: true,
+        createdAt: Date.now(),
+      });
+      expect(useFocusStore.getState().xp).toBe(xpAfterCompletion);
+    });
+
+    it("dismissReflection clears the modal pointer but leaves the log entry intact", () => {
       useFocusStore.setState({ currentTierId: 1, xp: 0 });
       queueNaturalCompletion(60);
       const { dismissReflection } = useFocusStore.getState();
       dismissReflection();
       const state = useFocusStore.getState();
+      expect(state.pendingReflectionFor).toBeNull();
+      expect(state.sessionLog).toHaveLength(1);
+      expect(state.sessionLog[0].reflection).toBeNull();
+      // XP was awarded at completion, not at dismiss — same 6 as the
+      // natural-completion path above.
       expect(state.xp).toBe(6);
+    });
+
+    it("a refresh after completion preserves the session in sessionLog", () => {
+      // Simulates the persist/rehydrate path: sessionLog is persisted but
+      // pendingReflectionFor is not. The session must remain in the log
+      // so it's recoverable in Insights, even if the modal is gone.
+      useFocusStore.setState({ currentTierId: 1, xp: 0 });
+      queueNaturalCompletion(60);
+      const beforeRefresh = useFocusStore.getState().sessionLog;
+      // Simulate rehydrate: pendingReflectionFor gets cleared by `merge`.
+      useFocusStore.setState({ pendingReflectionFor: null });
+      const state = useFocusStore.getState();
+      expect(state.sessionLog).toEqual(beforeRefresh);
+      expect(state.sessionLog).toHaveLength(1);
       expect(state.sessionLog[0].reflection).toBeNull();
     });
   });
