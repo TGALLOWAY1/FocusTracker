@@ -25,5 +25,13 @@ export default tseslint.config(
       // Tracked as a future refactor in docs/CODE_QUALITY_REVIEW.md.
       "react-hooks/set-state-in-effect": "warn",
     },
+  },
+  {
+    files: ["scripts/**/*.{js,mjs}"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: { ...globals.node },
+    },
   }
 );
