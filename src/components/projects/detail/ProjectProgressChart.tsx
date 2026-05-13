@@ -5,6 +5,8 @@ import type { Project } from "../../../data/projects";
 
 type Props = {
   project: Project;
+  /** Minimal sparkline variant for inline use inside another card. */
+  compact?: boolean;
 };
 
 const WEEKS = 12;
@@ -71,7 +73,7 @@ function bucketByWeek(
   });
 }
 
-export function ProjectProgressChart({ project }: Props) {
+export function ProjectProgressChart({ project, compact = false }: Props) {
   const sessionLog = useFocusStore((s) => s.sessionLog);
   const points = useMemo(() => {
     const sessions = sessionLog
@@ -104,12 +106,12 @@ export function ProjectProgressChart({ project }: Props) {
     (project.manualEntries?.length ?? 0) > 0 ||
     project.progressPercent > 0;
 
-  const W = 600;
-  const H = 200;
-  const PAD_L = 40;
-  const PAD_R = 16;
-  const PAD_T = 16;
-  const PAD_B = 28;
+  const W = compact ? 600 : 600;
+  const H = compact ? 60 : 200;
+  const PAD_L = compact ? 2 : 40;
+  const PAD_R = compact ? 2 : 16;
+  const PAD_T = compact ? 4 : 16;
+  const PAD_B = compact ? 4 : 28;
   const innerW = W - PAD_L - PAD_R;
   const innerH = H - PAD_T - PAD_B;
 
@@ -148,6 +150,101 @@ export function ProjectProgressChart({ project }: Props) {
 
   const yTicks = [0, 0.5, 1];
   const labelEvery = Math.ceil(points.length / 5);
+  const gradientId = compact
+    ? "proj-progress-fill-compact"
+    : "proj-progress-fill";
+
+  const svg = hasAnyActivity ? (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio="none"
+      className={compact ? "w-full block" : "w-full h-auto"}
+      role="img"
+      aria-label="Cumulative progress over the last 12 weeks"
+      style={compact ? { height: H } : undefined}
+    >
+      <defs>
+        <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#8B7CF6" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="#8B7CF6" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {!compact &&
+        yTicks.map((t) => {
+          const y = PAD_T + innerH - t * innerH;
+          return (
+            <g key={t}>
+              <line
+                x1={PAD_L}
+                x2={PAD_L + innerW}
+                y1={y}
+                y2={y}
+                stroke="#1F2638"
+                strokeWidth={1}
+              />
+              <text
+                x={PAD_L - 8}
+                y={y + 3}
+                textAnchor="end"
+                fontSize={10}
+                fill="#6B7390"
+                className="tabular-nums"
+              >
+                {Math.round(t * maxPercent)}%
+              </text>
+            </g>
+          );
+        })}
+      <path d={areaPath} fill={`url(#${gradientId})`} />
+      <path
+        d={linePath}
+        fill="none"
+        stroke="#8B7CF6"
+        strokeWidth={compact ? 1.5 : 2}
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+      {!compact && points.length > 0 && (
+        <circle
+          cx={xForIndex(points.length - 1)}
+          cy={yForMinutes(points[points.length - 1].cumulativeMinutes)}
+          r={3.5}
+          fill="#8B7CF6"
+          stroke="#0B0F1A"
+          strokeWidth={2}
+        />
+      )}
+      {!compact &&
+        points.map((p, i) =>
+          i % labelEvery === 0 || i === points.length - 1 ? (
+            <text
+              key={p.weekStart}
+              x={xForIndex(i)}
+              y={H - 8}
+              textAnchor="middle"
+              fontSize={10}
+              fill="#6B7390"
+            >
+              {p.label}
+            </text>
+          ) : null
+        )}
+    </svg>
+  ) : null;
+
+  if (compact) {
+    return (
+      <div className="w-full">
+        {hasAnyActivity ? (
+          svg
+        ) : (
+          <div className="h-12 flex items-center justify-center text-xs text-text-muted">
+            No activity yet
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <Card>
@@ -162,78 +259,7 @@ export function ProjectProgressChart({ project }: Props) {
       />
       <div className="mt-4">
         {hasAnyActivity ? (
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="xMidYMid meet"
-            className="w-full h-auto"
-            role="img"
-            aria-label="Cumulative progress over the last 12 weeks"
-          >
-            <defs>
-              <linearGradient id="proj-progress-fill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#8B7CF6" stopOpacity="0.35" />
-                <stop offset="100%" stopColor="#8B7CF6" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {yTicks.map((t) => {
-              const y = PAD_T + innerH - t * innerH;
-              return (
-                <g key={t}>
-                  <line
-                    x1={PAD_L}
-                    x2={PAD_L + innerW}
-                    y1={y}
-                    y2={y}
-                    stroke="#1F2638"
-                    strokeWidth={1}
-                  />
-                  <text
-                    x={PAD_L - 8}
-                    y={y + 3}
-                    textAnchor="end"
-                    fontSize={10}
-                    fill="#6B7390"
-                    className="tabular-nums"
-                  >
-                    {Math.round(t * maxPercent)}%
-                  </text>
-                </g>
-              );
-            })}
-            <path d={areaPath} fill="url(#proj-progress-fill)" />
-            <path
-              d={linePath}
-              fill="none"
-              stroke="#8B7CF6"
-              strokeWidth={2}
-              strokeLinejoin="round"
-              strokeLinecap="round"
-            />
-            {points.length > 0 && (
-              <circle
-                cx={xForIndex(points.length - 1)}
-                cy={yForMinutes(points[points.length - 1].cumulativeMinutes)}
-                r={3.5}
-                fill="#8B7CF6"
-                stroke="#0B0F1A"
-                strokeWidth={2}
-              />
-            )}
-            {points.map((p, i) =>
-              i % labelEvery === 0 || i === points.length - 1 ? (
-                <text
-                  key={p.weekStart}
-                  x={xForIndex(i)}
-                  y={H - 8}
-                  textAnchor="middle"
-                  fontSize={10}
-                  fill="#6B7390"
-                >
-                  {p.label}
-                </text>
-              ) : null
-            )}
-          </svg>
+          svg
         ) : (
           <div className="h-40 flex items-center justify-center text-sm text-text-muted">
             No focus time logged yet — start a session to see progress.

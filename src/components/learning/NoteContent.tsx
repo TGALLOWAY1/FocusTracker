@@ -1,5 +1,6 @@
 import { Lightbulb, Copy } from "lucide-react";
 import type { LearningNote } from "../../data/learningPath";
+import { Eyebrow } from "../ui/Eyebrow";
 
 type Props = {
   note: LearningNote;
@@ -48,9 +49,7 @@ export function NoteContent({ note }: Props) {
         </h4>
         <div className="mt-2 rounded-xl bg-bg-elevated border border-border-subtle overflow-hidden">
           <div className="flex items-center justify-between px-3 py-1.5 border-b border-border-subtle">
-            <span className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-              {note.code.language}
-            </span>
+            <Eyebrow as="span">{note.code.language}</Eyebrow>
             <button
               type="button"
               disabled

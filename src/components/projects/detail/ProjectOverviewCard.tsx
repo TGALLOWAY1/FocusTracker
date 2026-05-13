@@ -1,4 +1,5 @@
 import { Card, CardHeader } from "../../ui/Card";
+import { Eyebrow } from "../../ui/Eyebrow";
 import { ProgressRing } from "../../ui/ProgressRing";
 import {
   PROJECT_STATUS_LABEL,
@@ -7,6 +8,7 @@ import {
 } from "../../../data/projects";
 import { formatHM } from "../../../utils/time";
 import type { ProjectStats } from "../../../state/useProjectStats";
+import { ProjectProgressChart } from "./ProjectProgressChart";
 
 type Props = {
   project: Project;
@@ -86,6 +88,13 @@ export function ProjectOverviewCard({ project, stats }: Props) {
           </span>
         </Metric>
       </div>
+      <div className="mt-5 flex items-end justify-between gap-3">
+        <Eyebrow as="span">12-week trend</Eyebrow>
+        <span className="text-[11px] text-text-muted">Cumulative focus</span>
+      </div>
+      <div className="mt-2">
+        <ProjectProgressChart project={project} compact />
+      </div>
     </Card>
   );
 }
@@ -99,9 +108,7 @@ function Metric({
 }) {
   return (
     <div className="flex flex-col gap-1.5 min-w-0">
-      <span className="text-[11px] uppercase tracking-wider text-text-muted">
-        {label}
-      </span>
+      <Eyebrow as="span">{label}</Eyebrow>
       {children}
     </div>
   );

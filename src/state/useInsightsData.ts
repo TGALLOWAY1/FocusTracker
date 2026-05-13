@@ -295,3 +295,36 @@ export function useInsightsData(filters: InsightsFilters): InsightsData {
 export function categoryMeta(c: ActivityCategory) {
   return ACTIVITY_CATEGORIES[c];
 }
+
+export type HeadlineInsight = {
+  topCategoryLabel: string;
+  topCategoryMinutes: number;
+  longestSessionMinutes: number | null;
+};
+
+function fmtMinutes(min: number): string {
+  if (min < 60) return `${min}m`;
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return m === 0 ? `${h}h` : `${h}h ${m}m`;
+}
+
+export function deriveHeadlineInsight(data: InsightsData): HeadlineInsight | null {
+  if (data.logEmpty || data.sessions.length === 0) return null;
+  const top = data.byCategory[0];
+  if (!top) return null;
+  const longestSec = data.sessions.reduce(
+    (max, entry) => Math.max(max, entry.session.actualDurationSec),
+    0
+  );
+  const longestMin = longestSec > 0 ? Math.round(longestSec / 60) : null;
+  return {
+    topCategoryLabel: ACTIVITY_CATEGORIES[top.category].label,
+    topCategoryMinutes: top.minutes,
+    longestSessionMinutes: longestMin,
+  };
+}
+
+export function formatHeadlineInsightDuration(min: number): string {
+  return fmtMinutes(min);
+}

@@ -3,7 +3,8 @@ import { Folder, LayoutGrid, List, Plus } from "lucide-react";
 import { useProjectStore } from "../../state/projectStore";
 import { useAllProjectStats, sortProjects } from "../../state/useProjectStats";
 import type { Project, ProjectStatus } from "../../data/projects";
-import { ProjectsSummaryCards } from "./ProjectsSummaryCards";
+import { formatHM } from "../../utils/time";
+import { SummaryStrip, type SummaryItem } from "../ui/SummaryStrip";
 import { ProjectsFilterBar } from "./ProjectsFilterBar";
 import { ProjectCard } from "./ProjectCard";
 import { ProjectListRow } from "./ProjectListRow";
@@ -166,9 +167,25 @@ export function ProjectsPage() {
     return sortProjects(bySearch, stats, sort);
   }, [projects, statusFilter, search, sort, stats]);
 
+  const summaryItems = useMemo<SummaryItem[]>(() => {
+    const total = projects.length;
+    const active = projects.filter((p) => p.status === "active").length;
+    const completed = projects.filter((p) => p.status === "completed").length;
+    const totalMinutes = projects.reduce(
+      (acc, p) => acc + (stats.get(p.id)?.totalMinutes ?? 0),
+      0
+    );
+    return [
+      { value: String(total), label: total === 1 ? "Project" : "Projects" },
+      { value: String(active), label: "Active" },
+      { value: totalMinutes === 0 ? "0h" : formatHM(totalMinutes), label: "Focus Time" },
+      { value: String(completed), label: "Completed" },
+    ];
+  }, [projects, stats]);
+
   return (
     <>
-      <main className="flex flex-col gap-5 p-6 min-w-0 overflow-y-auto scrollbar-thin">
+      <main className="flex flex-col gap-4 p-6 min-w-0 overflow-y-auto scrollbar-thin">
         <Heading
           view={view}
           setView={setView}
@@ -177,7 +194,11 @@ export function ProjectsPage() {
           onNew={() => setCreating(true)}
         />
 
-        <ProjectsSummaryCards projects={projects} stats={stats} />
+        <SummaryStrip
+          items={summaryItems}
+          ariaLabel="Projects summary"
+          className="px-1"
+        />
 
         <ProjectsFilterBar
           statusFilter={statusFilter}

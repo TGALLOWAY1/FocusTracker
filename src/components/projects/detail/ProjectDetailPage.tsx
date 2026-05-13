@@ -25,12 +25,12 @@ import { LogManualTimeModal } from "../LogManualTimeModal";
 import { ProjectHero } from "./ProjectHero";
 import { ProjectTabs, type DetailTab } from "./ProjectTabs";
 import { ProjectOverviewCard } from "./ProjectOverviewCard";
-import { ProjectProgressChart } from "./ProjectProgressChart";
 import { ProjectTasksPanel } from "./ProjectTasksPanel";
 import { ProjectTagsCard } from "./ProjectTagsCard";
 import { ProjectLinksCard } from "./ProjectLinksCard";
 import { ProjectSessionsPanel } from "./ProjectSessionsPanel";
 import { ProjectNotesPanel } from "./ProjectNotesPanel";
+import { CurrentFocusCard } from "./CurrentFocusCard";
 
 const EVENT_ICON: Record<ProjectEventKind, typeof CheckCircle2> = {
   session_completed: PlayCircle,
@@ -156,16 +156,16 @@ export function ProjectDetailPage() {
       default:
         return (
           <>
+            <CurrentFocusCard project={project} />
             <ProjectOverviewCard project={project} stats={stats} />
-            <ProjectProgressChart project={project} />
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-              <div className="lg:col-span-2 flex flex-col gap-5">
+              <div className="lg:col-span-2">
                 <ProjectTasksPanel project={project} />
-                <ProjectSessionsPanel project={project} limit={4} />
               </div>
               <div className="flex flex-col gap-5">
                 <ProjectTagsCard project={project} />
                 <ProjectLinksCard project={project} />
+                <ProjectSessionsPanel project={project} limit={4} />
               </div>
             </div>
           </>
