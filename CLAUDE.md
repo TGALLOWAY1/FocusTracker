@@ -34,6 +34,8 @@ Stores never import each other's internals. Cross-store reads use `useXStore.get
 
 **When you change a persisted store's shape, bump `version` and add a `migrate`.** `projectStore` is the example to copy — its `migrate` upgrades legacy v2 records to the v3 shape. Stores without a real migration (focus / learning / ideas) currently rely on shape compatibility; introducing a breaking change without a migrate will silently corrupt user data.
 
+**A Convex backup layer mirrors each store's persisted payload remotely.** See `docs/PERSISTENCE.md`. `src/sync/snapshotSync.ts` is the pure logic (debounced push, hydrate-if-missing); `src/sync/convexBackend.ts` is the Convex adapter; `src/sync/installSync.ts` wires Zustand `subscribe` to a push scheduler. The wire format is the verbatim Zustand payload — `migrate`/`merge` remain the source of truth for shape. `localStorage` is primary; the backend only fills keys that are absent locally at cold start. Without `VITE_CONVEX_URL` the layer no-ops and the app falls back to localStorage-only.
+
 **Activity categories are a shared enum** in `src/data/activityCategories.ts`. `ACTIVITY_CATEGORIES` carries label, hex `color` (used by SVG charts), and Tailwind `bgClass` / `textClass`. Use `CATEGORY_ORDER` for any deterministic iteration over categories.
 
 **Design tokens are in `tailwind.config.ts`** — custom palette (`bg.*`, `text.*`, `brand.*`, `accent.*`, `border.*`) and the `focusGlow` shadow. Prefer these tokens over arbitrary values; new colors should be added to the config rather than inlined as `bg-[#…]`.
