@@ -15,6 +15,3 @@ dist-ssr
 # Convex generates this directory on `npx convex dev`. It binds the
 # repo to a specific deployment; regenerated locally per developer.
 convex/_generated/
-
-# Output of `npm run screenshots`
-screenshots/
