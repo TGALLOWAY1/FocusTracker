@@ -1,6 +1,7 @@
 import { CheckCircle2, Play, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "../../ui/Card";
+import { Eyebrow } from "../../ui/Eyebrow";
 import { useProjectStore } from "../../../state/projectStore";
 import { useFocusStore } from "../../../state/focusStore";
 import { ACTIVITY_CATEGORIES } from "../../../data/activityCategories";
@@ -28,9 +29,7 @@ export function CurrentFocusCard({ project }: Props) {
   if (!current) {
     return (
       <Card className="flex flex-col gap-3">
-        <div className="text-[11px] uppercase tracking-wider font-medium text-text-muted">
-          Current Focus
-        </div>
+        <Eyebrow>Current Focus</Eyebrow>
         <div className="flex items-start gap-3">
           <div className="w-10 h-10 rounded-xl bg-accent-greenSoft flex items-center justify-center shrink-0">
             <CheckCircle2 size={18} className="text-accent-green" strokeWidth={2.2} />
@@ -59,10 +58,10 @@ export function CurrentFocusCard({ project }: Props) {
   return (
     <Card className="flex flex-col gap-4 border-brand-purple/25 bg-gradient-to-br from-brand-purpleSoft/40 via-bg-card to-bg-card">
       <div className="flex items-center justify-between gap-3">
-        <div className="text-[11px] uppercase tracking-wider font-medium text-text-muted inline-flex items-center gap-2">
+        <Eyebrow className="inline-flex items-center gap-2">
           <Sparkles size={12} className="text-brand-purple" />
           Current Focus
-        </div>
+        </Eyebrow>
         <span className="text-[11px] text-text-muted tabular-nums">
           {remaining} task{remaining === 1 ? "" : "s"} remaining
         </span>

@@ -1,5 +1,6 @@
 import { Plus, Search } from "lucide-react";
 import type { LearningModule } from "../../data/learningPath";
+import { Eyebrow } from "../ui/Eyebrow";
 import { ModuleRow } from "./ModuleRow";
 
 type Props = {
@@ -20,9 +21,7 @@ export function ModuleOutline({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2 px-1">
-        <span className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-          Expand all
-        </span>
+        <Eyebrow as="span">Expand all</Eyebrow>
         <div className="flex items-center gap-1">
           <button
             type="button"

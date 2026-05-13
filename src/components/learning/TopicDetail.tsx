@@ -1,5 +1,6 @@
 import { Plus, MoreHorizontal } from "lucide-react";
 import type { LearningSubtopic } from "../../data/learningPath";
+import { Eyebrow } from "../ui/Eyebrow";
 import { SubtopicCard } from "./SubtopicCard";
 import { ResourceList } from "./ResourceList";
 
@@ -74,9 +75,7 @@ export function TopicDetail({ topic, notesSubtopicId, onSelectChild }: Props) {
 
       {children.length > 0 && (
         <div className="flex flex-col gap-2">
-          <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium px-1">
-            Subtopics
-          </div>
+          <Eyebrow className="px-1">Subtopics</Eyebrow>
           {children.map((child) => (
             <SubtopicCard
               key={child.id}
@@ -101,9 +100,7 @@ export function TopicDetail({ topic, notesSubtopicId, onSelectChild }: Props) {
       {resources.length > 0 && (
         <div className="flex flex-col gap-2 mt-2">
           <div className="flex items-center justify-between px-1">
-            <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-              Resources
-            </div>
+            <Eyebrow>Resources</Eyebrow>
             <button
               type="button"
               disabled
