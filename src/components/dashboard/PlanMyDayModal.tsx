@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Sparkles } from "lucide-react";
 import { Modal } from "../ui/Modal";
+import { Eyebrow } from "../ui/Eyebrow";
 import { useFocusStore } from "../../state/focusStore";
 import { useProjectStore } from "../../state/projectStore";
 import {
@@ -25,14 +26,14 @@ function FieldLabel({
   optional?: boolean;
 }) {
   return (
-    <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium mb-2">
+    <Eyebrow className="mb-2">
       {children}
       {optional && (
         <span className="ml-1.5 text-text-muted/70 normal-case tracking-normal">
           (optional)
         </span>
       )}
-    </div>
+    </Eyebrow>
   );
 }
 

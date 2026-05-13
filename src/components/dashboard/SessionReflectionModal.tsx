@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { Modal } from "../ui/Modal";
+import { Eyebrow } from "../ui/Eyebrow";
 import { useFocusStore, type CompletedSession } from "../../state/focusStore";
 import { formatMMSS } from "../../utils/time";
 
@@ -75,14 +76,14 @@ function FieldLabel({
   optional?: boolean;
 }) {
   return (
-    <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium mb-2">
+    <Eyebrow className="mb-2">
       {children}
       {optional && (
         <span className="ml-1.5 text-text-muted/70 normal-case tracking-normal">
           (optional)
         </span>
       )}
-    </div>
+    </Eyebrow>
   );
 }
 

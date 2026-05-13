@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Modal } from "../../ui/Modal";
+import { Eyebrow } from "../../ui/Eyebrow";
 import { useProjectStore } from "../../../state/projectStore";
 import type { ProjectNote } from "../../../data/projects";
 
@@ -56,9 +57,7 @@ export function AddNoteModal({ open, onClose, projectId, existing }: Props) {
     >
       <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] uppercase tracking-wider text-text-muted">
-            Title
-          </span>
+          <Eyebrow as="span">Title</Eyebrow>
           <input
             autoFocus
             value={title}
@@ -68,9 +67,7 @@ export function AddNoteModal({ open, onClose, projectId, existing }: Props) {
           />
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] uppercase tracking-wider text-text-muted">
-            Body
-          </span>
+          <Eyebrow as="span">Body</Eyebrow>
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}

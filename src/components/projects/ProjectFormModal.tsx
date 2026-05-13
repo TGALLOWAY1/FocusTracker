@@ -1,6 +1,7 @@
 import { useMemo, useState, type ChangeEvent } from "react";
 import { ImagePlus, Palette, X } from "lucide-react";
 import { Modal } from "../ui/Modal";
+import { Eyebrow } from "../ui/Eyebrow";
 import {
   COVER_PRESETS,
   COVER_PRESET_KEYS,
@@ -505,10 +506,10 @@ function Field({
 }) {
   return (
     <label className="flex flex-col gap-1.5">
-      <span className="flex items-center justify-between text-[11px] uppercase tracking-wider text-text-muted font-medium">
+      <Eyebrow as="span" className="flex items-center justify-between">
         {label}
         {hint && <span className="text-text-muted normal-case tracking-normal">{hint}</span>}
-      </span>
+      </Eyebrow>
       {children}
     </label>
   );
