@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PieChart } from "lucide-react";
 import {
+  deriveHeadlineInsight,
+  formatHeadlineInsightDuration,
   useInsightsData,
   type InsightsFilters,
 } from "../../state/useInsightsData";
-import { SummaryCards } from "./SummaryCards";
+import { formatHM } from "../../utils/time";
+import { SummaryStrip, type SummaryItem } from "../ui/SummaryStrip";
 import { InsightsFiltersBar } from "./InsightsFilters";
 import { SessionsFeed } from "./SessionsFeed";
 import { CategoryDonutPanel } from "./CategoryDonutPanel";
@@ -30,6 +33,22 @@ function Heading() {
   );
 }
 
+function formatRating(rating: number): string {
+  if (rating === 0) return "—";
+  return `${rating.toFixed(1)} / 5`;
+}
+
+function rangeLabel(range: InsightsFilters["dateRange"]): string {
+  switch (range) {
+    case "week":
+      return "This week";
+    case "month":
+      return "Last 30 days";
+    case "all":
+      return "All time";
+  }
+}
+
 export function InsightsPage() {
   const [filters, setFilters] = useState<InsightsFilters>({
     dateRange: "week",
@@ -41,6 +60,31 @@ export function InsightsPage() {
   const filterIsActive =
     filters.quickFilter !== "all" || !!filters.projectId;
 
+  const summaryItems = useMemo<SummaryItem[]>(() => {
+    const { summary } = data;
+    const empty = summary.sessionCount === 0;
+    return [
+      {
+        value: empty ? "—" : formatHM(summary.totalMinutes),
+        label: "Focus",
+      },
+      {
+        value: empty ? "0" : String(summary.sessionCount),
+        label: summary.sessionCount === 1 ? "Session" : "Sessions",
+      },
+      {
+        value: empty ? "—" : `${Math.round(summary.completionRate * 100)}%`,
+        label: "Completion",
+      },
+      {
+        value: formatRating(summary.avgFocusRating),
+        label: "Avg Focus",
+      },
+    ];
+  }, [data]);
+
+  const headline = useMemo(() => deriveHeadlineInsight(data), [data]);
+
   return (
     <>
       <main className="flex flex-col gap-5 p-6 min-w-0 overflow-y-auto scrollbar-thin">
@@ -51,7 +95,33 @@ export function InsightsPage() {
         ) : (
           <>
             <InsightsFiltersBar filters={filters} onChange={setFilters} />
-            <SummaryCards summary={data.summary} />
+            <div className="flex flex-col gap-2">
+              <SummaryStrip
+                items={summaryItems}
+                ariaLabel={`${rangeLabel(filters.dateRange)} summary`}
+                className="px-1"
+              />
+              {headline && (
+                <p className="px-1 text-sm text-text-secondary">
+                  Most of your focus went to{" "}
+                  <strong className="font-semibold text-text-primary">
+                    {headline.topCategoryLabel}
+                  </strong>{" "}
+                  ({formatHeadlineInsightDuration(headline.topCategoryMinutes)})
+                  {headline.longestSessionMinutes !== null && (
+                    <>
+                      . Longest session:{" "}
+                      <strong className="font-semibold text-text-primary">
+                        {formatHeadlineInsightDuration(
+                          headline.longestSessionMinutes
+                        )}
+                      </strong>
+                    </>
+                  )}
+                  .
+                </p>
+              )}
+            </div>
             <SessionsFeed
               sessions={data.sessions}
               filterIsActive={filterIsActive}

@@ -199,7 +199,7 @@ function IdleState() {
   const project = useFocusProjectName();
   const durationSec = useFocusStore((s) => s.durationSec);
   return (
-    <div className="relative h-[480px] flex flex-col items-center justify-center text-center px-8">
+    <div className="relative h-[420px] flex flex-col items-center justify-center text-center px-8">
       <SunsetBackdrop />
       <div className="relative z-10">
         <div className="text-xs uppercase tracking-wider text-white/70 mb-2">
@@ -241,7 +241,7 @@ function ActiveState() {
     <div className="relative">
       <SunsetBackdrop />
 
-      <div className="relative z-10 px-6 pt-5 pb-6">
+      <div className="relative z-10 px-6 pt-4 pb-5">
         {/* header row */}
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 text-sm font-medium text-white">

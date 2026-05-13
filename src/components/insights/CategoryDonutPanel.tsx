@@ -19,15 +19,17 @@ export function CategoryDonutPanel({ slices, totalMinutes }: Props) {
         subtitle="Where is your attention actually going?"
       />
       <div className="mt-4 flex justify-center">
-        <div className="w-[168px]">
+        <div className="w-[140px]">
           <CategoryDonut
             slices={slices}
             centerLabel={centerLabel}
             centerSub="Total"
+            size={140}
+            thickness={14}
           />
         </div>
       </div>
-      <ul className="mt-5 flex flex-col gap-2">
+      <ul className="mt-4 flex flex-col gap-1.5">
         {isEmpty ? (
           <li className="text-xs text-text-muted text-center py-2">
             No category data yet — your sessions will appear here.

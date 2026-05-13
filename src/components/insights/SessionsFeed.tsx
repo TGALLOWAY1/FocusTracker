@@ -60,11 +60,17 @@ export function SessionsFeed({ sessions, filterIsActive }: Props) {
         title="Recent Sessions"
         subtitle={`${sessions.length} session${sessions.length === 1 ? "" : "s"}`}
       />
-      <div className="mt-4 flex flex-col gap-5">
+      <div className="mt-4 flex flex-col gap-6">
         {groups.map((group) => (
-          <div key={group.key} className="flex flex-col gap-2.5">
-            <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-              {group.label}
+          <div key={group.key} className="flex flex-col gap-3">
+            <div className="flex items-center justify-between gap-3 border-b border-border-subtle pb-2">
+              <div className="text-xs uppercase tracking-wide font-semibold text-text-secondary">
+                {group.label}
+              </div>
+              <div className="text-[11px] text-text-muted tabular-nums">
+                {group.entries.length} session
+                {group.entries.length === 1 ? "" : "s"}
+              </div>
             </div>
             <div className="flex flex-col gap-2.5">
               {group.entries.map((entry) => (

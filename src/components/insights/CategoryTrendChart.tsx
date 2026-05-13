@@ -8,21 +8,24 @@ type Props = {
 export function CategoryTrendChart({ trend }: Props) {
   const { points, series, maxHours } = trend;
   const width = 320;
-  const height = 168;
-  const padLeft = 26;
-  const padRight = 8;
-  const padTop = 8;
-  const padBottom = 24;
+  const height = 120;
+  const padLeft = 24;
+  const padRight = 6;
+  const padTop = 6;
+  const padBottom = 20;
   const chartW = width - padLeft - padRight;
   const chartH = height - padTop - padBottom;
   const stepX = points.length > 1 ? chartW / (points.length - 1) : 0;
-  const yTicks = [0, maxHours / 2, maxHours];
+  const yTicks = [0, maxHours];
 
   const xFor = (i: number) => padLeft + i * stepX;
   const yFor = (hours: number) =>
     padTop + chartH - (Math.min(hours, maxHours) / maxHours) * chartH;
 
-  const labelStep = points.length > 14 ? Math.ceil(points.length / 7) : 1;
+  // Show fewer X-axis labels for a calmer look — every other tick for week,
+  // ~5 evenly-spaced ticks for month/30-day views.
+  const labelStep =
+    points.length > 14 ? Math.ceil(points.length / 5) : 2;
 
   return (
     <svg

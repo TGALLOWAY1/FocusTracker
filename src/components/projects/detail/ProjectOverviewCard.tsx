@@ -7,6 +7,7 @@ import {
 } from "../../../data/projects";
 import { formatHM } from "../../../utils/time";
 import type { ProjectStats } from "../../../state/useProjectStats";
+import { ProjectProgressChart } from "./ProjectProgressChart";
 
 type Props = {
   project: Project;
@@ -85,6 +86,15 @@ export function ProjectOverviewCard({ project, stats }: Props) {
             {formatDate(project.updatedAt)}
           </span>
         </Metric>
+      </div>
+      <div className="mt-5 flex items-end justify-between gap-3">
+        <span className="text-[11px] uppercase tracking-wider text-text-muted">
+          12-week trend
+        </span>
+        <span className="text-[11px] text-text-muted">Cumulative focus</span>
+      </div>
+      <div className="mt-2">
+        <ProjectProgressChart project={project} compact />
       </div>
     </Card>
   );

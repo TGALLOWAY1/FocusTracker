@@ -29,21 +29,26 @@ function StatusIcon({ subtopic }: { subtopic: LearningSubtopic }) {
 
 export function SubtopicOutlineRow({ subtopic, selected, onClick }: Props) {
   const baseClasses =
-    "w-full flex items-center gap-3 pl-9 pr-3 py-2 rounded-lg text-left text-sm transition-colors";
+    "w-full flex items-center gap-3 pl-8 pr-3 py-2.5 rounded-lg text-left text-sm transition-colors border-l-2";
   const stateClasses = selected
-    ? "bg-brand-purpleSoft text-text-primary border border-brand-purple/20"
-    : "text-text-secondary hover:bg-bg-cardHover hover:text-text-primary border border-transparent";
+    ? "bg-brand-purpleSoft text-text-primary border-brand-purple font-medium"
+    : "text-text-muted hover:bg-bg-cardHover hover:text-text-secondary border-transparent";
 
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-current={selected ? "true" : undefined}
       className={`${baseClasses} ${stateClasses}`}
     >
       <span className="w-5 flex justify-center shrink-0">
         <StatusIcon subtopic={subtopic} />
       </span>
-      <span className="text-xs text-text-muted tabular-nums w-8 shrink-0">
+      <span
+        className={`text-xs tabular-nums w-8 shrink-0 ${
+          selected ? "text-brand-purple" : "text-text-muted"
+        }`}
+      >
         {subtopic.numericLabel}
       </span>
       <span className="truncate">{subtopic.title}</span>
