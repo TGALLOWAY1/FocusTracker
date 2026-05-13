@@ -1,10 +1,22 @@
 import { BrowserRouter } from "react-router-dom";
 import { AppShell } from "./components/layout/AppShell";
+import { AuthGate } from "./components/auth/AuthGate";
+import { HydrationGate } from "./components/auth/HydrationGate";
+import { ToastProvider, ToastBridge } from "./components/ui/Toast";
 
 export default function App() {
   return (
     <BrowserRouter>
-      <AppShell />
+      <ToastProvider>
+        <ToastBridge />
+        <AuthGate>
+          {(session) => (
+            <HydrationGate session={session}>
+              <AppShell />
+            </HydrationGate>
+          )}
+        </AuthGate>
+      </ToastProvider>
     </BrowserRouter>
   );
 }

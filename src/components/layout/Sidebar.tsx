@@ -1,4 +1,4 @@
-import { ChevronRight, Flame, Target, Star } from "lucide-react";
+import { LogOut, Flame, Target, Star } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { NAV_ITEMS } from "../../data/navItems";
 import { Card } from "../ui/Card";
@@ -7,6 +7,8 @@ import { useWeeklyStats } from "../../state/useWeeklyStats";
 import { useStreaks } from "../../state/useStreaks";
 import { FOCUS_TIERS, getTier } from "../../data/focusTiers";
 import { clamp } from "../../utils/time";
+import { useSession } from "../../lib/useSession";
+import { signOutAndClear } from "../../lib/signOut";
 
 function FocusLadderLogo() {
   return (
@@ -230,17 +232,30 @@ function StreaksCard() {
 }
 
 function ProfileRow() {
+  const session = useSession();
+  const email = session.status === "authed" ? session.session.user.email ?? "" : "";
+  const initial = email.charAt(0).toUpperCase() || "?";
+
   return (
-    <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-bg-card border border-border-subtle">
+    <button
+      type="button"
+      onClick={() => {
+        void signOutAndClear();
+      }}
+      className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-bg-card border border-border-subtle hover:bg-bg-cardHover transition-colors text-left"
+      title="Sign out"
+    >
       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-purple to-accent-green flex items-center justify-center text-sm font-semibold text-bg-base">
-        A
+        {initial}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium text-text-primary truncate">Alex</div>
-        <div className="text-[11px] text-text-muted truncate">Keep climbing.</div>
+        <div className="text-sm font-medium text-text-primary truncate">
+          {email || "Signed in"}
+        </div>
+        <div className="text-[11px] text-text-muted truncate">Sign out</div>
       </div>
-      <ChevronRight size={16} className="text-text-muted" />
-    </div>
+      <LogOut size={16} className="text-text-muted" />
+    </button>
   );
 }
 
