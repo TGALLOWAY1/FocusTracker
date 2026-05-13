@@ -4,6 +4,8 @@ import { newId } from "../utils/id";
 import { getTier } from "../data/focusTiers";
 import type { ActivityCategory } from "../data/activityCategories";
 import { useProjectStore } from "./projectStore";
+import { sessionRepo } from "../repos/sessionRepo";
+import { userScopedLocalStorage } from "../lib/userScopedStorage";
 
 export type SessionStatus = "idle" | "running" | "paused";
 
@@ -99,6 +101,8 @@ type FocusActions = {
   clearDailyPlan: () => void;
   submitReflection: (reflection: SessionReflection) => void;
   dismissReflection: () => void;
+  /** Used by HydrationGate to replace the local log with the server's. */
+  _setSessionLogFromServer: (entries: LoggedSession[]) => void;
 };
 
 export type FocusStore = FocusState & FocusActions;
@@ -249,7 +253,7 @@ function applyCompletion(state: FocusState, completedNaturally: boolean) {
 
 export const useFocusStore = create<FocusStore>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       status: "idle" as SessionStatus,
       // Must reference a real entry in projectStore's SEED_PROJECTS; before
       // Slice 3 a hardcoded `project: "Harmonia EP"` label masked the fact
@@ -275,16 +279,23 @@ export const useFocusStore = create<FocusStore>()(
       pause: () => set({ status: "paused" }),
       resume: () => set({ status: "running" }),
 
-      end: () => set((s) => applyCompletion(s, false)),
+      end: () => {
+        set((s) => applyCompletion(s, false));
+        const completed = get().pendingReflectionFor;
+        if (completed) void sessionRepo.insert(completed);
+      },
 
-      tick: () =>
-        set((s) => {
-          if (s.status !== "running") return s;
-          if (s.remainingSec <= 1) {
-            return applyCompletion(s, true);
-          }
-          return { remainingSec: s.remainingSec - 1 };
-        }),
+      tick: () => {
+        const s = get();
+        if (s.status !== "running") return;
+        if (s.remainingSec <= 1) {
+          set(applyCompletion(s, true));
+          const completed = get().pendingReflectionFor;
+          if (completed) void sessionRepo.insert(completed);
+        } else {
+          set({ remainingSec: s.remainingSec - 1 });
+        }
+      },
 
       // The `name` field on the input is accepted for caller ergonomics
       // but intentionally ignored — the live name is derived from
@@ -314,28 +325,37 @@ export const useFocusStore = create<FocusStore>()(
       // `reflection: null`) and XP was already awarded at completion.
       // We just attach the reflection to the matching log entry, then
       // clear the pending pointer that drove the modal.
-      submitReflection: (reflection) =>
-        set((s) => {
-          if (!s.pendingReflectionFor) return s;
-          const targetId = s.pendingReflectionFor.id;
-          return {
-            pendingReflectionFor: null,
-            sessionLog: s.sessionLog.map((entry) =>
-              entry.session.id === targetId
-                ? { ...entry, reflection }
-                : entry
-            ),
-          };
-        }),
+      submitReflection: (reflection) => {
+        const pending = get().pendingReflectionFor;
+        if (!pending) return;
+        const targetId = pending.id;
+        set((s) => ({
+          pendingReflectionFor: null,
+          sessionLog: s.sessionLog.map((entry) =>
+            entry.session.id === targetId
+              ? { ...entry, reflection }
+              : entry
+          ),
+        }));
+        void sessionRepo.attachReflection(reflection);
+      },
 
       // Skipping reflection is a UX opt-out, not a forfeit. The session
       // and XP are already committed; just close the modal.
       dismissReflection: () => set({ pendingReflectionFor: null }),
+
+      _setSessionLogFromServer: (entries) => set({ sessionLog: entries }),
     }),
     {
+      // v5 changed the storage location from a single shared key to a
+      // per-user key (`focus-ladder.focus.${userId}`). The shape is
+      // unchanged from v4, so no `migrate` work is needed here — the new
+      // key simply starts empty and HydrationGate's server fetch fills
+      // sessionLog on first sign-in. Legacy unscoped data (if any) is
+      // imported via M5's import flow.
       name: "focus-ladder.focus",
-      version: 4,
-      storage: createJSONStorage(() => localStorage),
+      version: 5,
+      storage: createJSONStorage(() => userScopedLocalStorage),
       partialize: (state): PersistedFocus => ({
         projectId: state.projectId,
         task: state.task,
@@ -352,6 +372,8 @@ export const useFocusStore = create<FocusStore>()(
       // from projectStore via useFocusProjectName) and renamed each
       // sessionLog entry's `session.project` to `session.projectName`
       // to make its snapshot-not-key semantics explicit.
+      // v4 -> v5 only changed the storage key location (see above);
+      // no shape changes, so the migrate function below stays at v4.
       migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== "object") {
           return persistedState;

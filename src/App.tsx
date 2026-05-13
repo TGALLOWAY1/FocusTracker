@@ -11,7 +11,7 @@ export default function App() {
         <ToastBridge />
         <AuthGate>
           {(session) => (
-            <HydrationGate session={session}>
+            <HydrationGate key={session.user.id} session={session}>
               <AppShell />
             </HydrationGate>
           )}
