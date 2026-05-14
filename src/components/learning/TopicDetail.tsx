@@ -1,4 +1,4 @@
-import { Plus, MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, PanelLeftClose, Plus } from "lucide-react";
 import type { LearningSubtopic } from "../../data/learningPath";
 import { Eyebrow } from "../ui/Eyebrow";
 import { SubtopicCard } from "./SubtopicCard";
@@ -8,6 +8,7 @@ type Props = {
   topic: LearningSubtopic | null;
   notesSubtopicId: string;
   onSelectChild: (id: string) => void;
+  onHideOverview: () => void;
 };
 
 function StatusBadge({ subtopic }: { subtopic: LearningSubtopic }) {
@@ -32,7 +33,12 @@ function StatusBadge({ subtopic }: { subtopic: LearningSubtopic }) {
   );
 }
 
-export function TopicDetail({ topic, notesSubtopicId, onSelectChild }: Props) {
+export function TopicDetail({
+  topic,
+  notesSubtopicId,
+  onSelectChild,
+  onHideOverview,
+}: Props) {
   if (!topic) {
     return (
       <div className="rounded-2xl border border-dashed border-border-subtle p-8 text-center text-text-muted text-sm">
@@ -56,15 +62,26 @@ export function TopicDetail({ topic, notesSubtopicId, onSelectChild }: Props) {
           </h2>
           <StatusBadge subtopic={topic} />
         </div>
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          title="Coming soon"
-          className="w-8 h-8 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary cursor-not-allowed opacity-80"
-        >
-          <MoreHorizontal size={16} />
-        </button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            type="button"
+            onClick={onHideOverview}
+            title="Hide overview"
+            aria-label="Hide overview"
+            className="w-8 h-8 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-cardHover transition-colors"
+          >
+            <PanelLeftClose size={16} />
+          </button>
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="Coming soon"
+            className="w-8 h-8 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary cursor-not-allowed opacity-80"
+          >
+            <MoreHorizontal size={16} />
+          </button>
+        </div>
       </div>
 
       {topic.description && (
