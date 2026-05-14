@@ -5,8 +5,12 @@ import { LearningHeader } from "./LearningHeader";
 import { ModuleOutline } from "./ModuleOutline";
 import { TopicDetail } from "./TopicDetail";
 import { NotesPanel } from "./NotesPanel";
+import { useUIStore } from "../../state/uiStore";
+import { PanelRightClose } from "lucide-react";
 
 export function LearningPathPage() {
+  const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
+  const toggleRightSidebar = useUIStore((s) => s.toggleRightSidebar);
   const path = useLearningStore((s) => s.path);
   const expandedModuleIds = useLearningStore((s) => s.expandedModuleIds);
   const selectedSubtopicId = useLearningStore((s) => s.selectedSubtopicId);
@@ -85,22 +89,31 @@ export function LearningPathPage() {
         </div>
       </main>
 
-      <aside className="hidden lg:flex flex-col border-l border-border-subtle p-5 min-h-0">
-        <NotesPanel
-          subtopic={notesSubtopic}
-          activeTab={activeRightTab}
-          onTabChange={setActiveTab}
-          onAppendNote={appendUserParagraph}
-          onUpdateUserParagraph={updateUserParagraph}
-          onRemoveUserParagraph={removeUserParagraph}
-          onUpdateNote={(partial: Partial<LearningNote>) => {
-            if (notesSubtopic) updateNote(notesSubtopic.id, partial);
-          }}
-          onStartNote={() => {
-            if (notesSubtopic) initializeNote(notesSubtopic.id);
-          }}
-        />
-      </aside>
+      {rightSidebarOpen && (
+        <aside className="relative hidden lg:flex flex-col border-l border-border-subtle p-5 min-h-0">
+          <button
+            onClick={toggleRightSidebar}
+            className="absolute top-3 right-3 z-10 p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-elevated rounded-md transition-colors"
+            title="Collapse side panel"
+          >
+            <PanelRightClose size={16} />
+          </button>
+          <NotesPanel
+            subtopic={notesSubtopic}
+            activeTab={activeRightTab}
+            onTabChange={setActiveTab}
+            onAppendNote={appendUserParagraph}
+            onUpdateUserParagraph={updateUserParagraph}
+            onRemoveUserParagraph={removeUserParagraph}
+            onUpdateNote={(partial: Partial<LearningNote>) => {
+              if (notesSubtopic) updateNote(notesSubtopic.id, partial);
+            }}
+            onStartNote={() => {
+              if (notesSubtopic) initializeNote(notesSubtopic.id);
+            }}
+          />
+        </aside>
+      )}
     </>
   );
 }

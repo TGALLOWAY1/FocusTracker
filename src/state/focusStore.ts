@@ -99,6 +99,8 @@ type FocusActions = {
   clearDailyPlan: () => void;
   submitReflection: (reflection: SessionReflection) => void;
   dismissReflection: () => void;
+  deleteSession: (sessionId: string) => void;
+  discardPendingSession: () => void;
 };
 
 export type FocusStore = FocusState & FocusActions;
@@ -210,6 +212,29 @@ export function applyXpAward(
     tierId += 1;
   }
   return { currentTierId: tierId, xp: total };
+}
+
+export function calculateTierState(totalXp: number): { currentTierId: number; xp: number } {
+  let tierId = 1;
+  let remaining = Math.max(0, totalXp);
+  while (true) {
+    const tier = getTier(tierId);
+    if (!tier || !Number.isFinite(tier.xpToNext) || remaining < tier.xpToNext) {
+      break;
+    }
+    remaining -= tier.xpToNext;
+    tierId += 1;
+  }
+  return { currentTierId: tierId, xp: remaining };
+}
+
+export function getTotalXp(state: FocusState): number {
+  let total = state.xp;
+  for (let i = 1; i < state.currentTierId; i++) {
+    const t = getTier(i);
+    if (t) total += t.xpToNext;
+  }
+  return total;
 }
 
 type PersistedFocus = Pick<
@@ -331,6 +356,37 @@ export const useFocusStore = create<FocusStore>()(
       // Skipping reflection is a UX opt-out, not a forfeit. The session
       // and XP are already committed; just close the modal.
       dismissReflection: () => set({ pendingReflectionFor: null }),
+
+      deleteSession: (sessionId) =>
+        set((s) => {
+          const entry = s.sessionLog.find((e) => e.session.id === sessionId);
+          if (!entry) return s;
+          const sessionXp = xpForSession(entry.session);
+          const totalXp = Math.max(0, getTotalXp(s) - sessionXp);
+          const newTierState = calculateTierState(totalXp);
+          return {
+            sessionLog: s.sessionLog.filter((e) => e.session.id !== sessionId),
+            currentTierId: newTierState.currentTierId,
+            xp: newTierState.xp,
+          };
+        }),
+
+      discardPendingSession: () =>
+        set((s) => {
+          if (!s.pendingReflectionFor) return s;
+          const targetId = s.pendingReflectionFor.id;
+          const entry = s.sessionLog.find((e) => e.session.id === targetId);
+          if (!entry) return { pendingReflectionFor: null };
+          const sessionXp = xpForSession(entry.session);
+          const totalXp = Math.max(0, getTotalXp(s) - sessionXp);
+          const newTierState = calculateTierState(totalXp);
+          return {
+            pendingReflectionFor: null,
+            sessionLog: s.sessionLog.filter((e) => e.session.id !== targetId),
+            currentTierId: newTierState.currentTierId,
+            xp: newTierState.xp,
+          };
+        }),
     }),
     {
       name: "focus-ladder.focus",

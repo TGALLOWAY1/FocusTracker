@@ -1,9 +1,9 @@
-import { CheckCircle2, AlertCircle, Star, Zap, Target } from "lucide-react";
+import { CheckCircle2, AlertCircle, Star, Zap, Target, Trash2 } from "lucide-react";
 import { useProjectStore } from "../../state/projectStore";
 import { PROJECT_ICONS, projectColorClasses } from "../../data/projects";
 import { ACTIVITY_CATEGORIES } from "../../data/activityCategories";
 import { formatHM } from "../../utils/time";
-import type { LoggedSession } from "../../state/focusStore";
+import { useFocusStore, type LoggedSession } from "../../state/focusStore";
 
 function formatTimeOfDay(ts: number): string {
   const d = new Date(ts);
@@ -87,7 +87,7 @@ export function SessionRow({ entry }: { entry: LoggedSession }) {
   const completed = session.completedNaturally;
 
   return (
-    <article className="flex items-start gap-3 p-4 rounded-2xl border border-border-subtle bg-bg-card hover:bg-bg-cardHover transition-colors">
+    <article className="group flex items-start gap-3 p-4 rounded-2xl border border-border-subtle bg-bg-card hover:bg-bg-cardHover transition-colors">
       <div
         className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center ${colors.iconBg}`}
       >
@@ -107,14 +107,27 @@ export function SessionRow({ entry }: { entry: LoggedSession }) {
             )}
           </div>
 
-          <div className="text-right shrink-0 leading-tight">
-            <div className="text-sm font-semibold tabular-nums text-text-primary">
-              {formatHM(durationMin)}
+          <div className="flex items-start gap-3 shrink-0">
+            <div className="text-right leading-tight">
+              <div className="text-sm font-semibold tabular-nums text-text-primary">
+                {formatHM(durationMin)}
+              </div>
+              <div className="text-[11px] text-text-muted tabular-nums">
+                {formatTimeOfDay(session.startedAt)}–
+                {formatTimeOfDay(session.endedAt)}
+              </div>
             </div>
-            <div className="text-[11px] text-text-muted tabular-nums">
-              {formatTimeOfDay(session.startedAt)}–
-              {formatTimeOfDay(session.endedAt)}
-            </div>
+            <button
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete this session?")) {
+                  useFocusStore.getState().deleteSession(session.id);
+                }
+              }}
+              className="p-1.5 -mr-1.5 text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-md transition-colors opacity-0 group-hover:opacity-100"
+              title="Delete session"
+            >
+              <Trash2 size={14} />
+            </button>
           </div>
         </div>
 

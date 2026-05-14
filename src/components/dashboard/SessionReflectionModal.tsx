@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { CheckCircle2, Sparkles } from "lucide-react";
+import { CheckCircle2, Sparkles, Trash2 } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { Eyebrow } from "../ui/Eyebrow";
 import { useFocusStore, type CompletedSession } from "../../state/focusStore";
@@ -91,6 +91,7 @@ export function SessionReflectionModal() {
   const pending = useFocusStore((s) => s.pendingReflectionFor);
   const submit = useFocusStore((s) => s.submitReflection);
   const dismiss = useFocusStore((s) => s.dismissReflection);
+  const discard = useFocusStore((s) => s.discardPendingSession);
 
   const [focusLevel, setFocusLevel] = useState(0);
   const [energyLevel, setEnergyLevel] = useState(0);
@@ -124,7 +125,7 @@ export function SessionReflectionModal() {
   const title = pending.completedNaturally ? "Nice work." : "Session ended.";
   const description = pending.completedNaturally
     ? "You finished the session you committed to. Quick reflection while it's fresh?"
-    : "Every block of focus counts. A short reflection will help next time.";
+    : "Every block of focus counts. A short reflection will help next time. (Or discard if this was an accident)";
 
   return (
     <Modal
@@ -192,23 +193,39 @@ export function SessionReflectionModal() {
           </span>
         </label>
 
-        <div className="flex items-center justify-end gap-2 pt-2 border-t border-border-subtle/70">
+        <div className="flex items-center justify-between pt-2 border-t border-border-subtle/70">
           <button
             type="button"
-            onClick={dismiss}
-            className="px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+            onClick={() => {
+              if (window.confirm("Are you sure you want to discard this session?")) {
+                discard();
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-text-muted hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            title="Discard session"
           >
-            Skip
+            <Trash2 size={14} />
+            Discard
           </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={!canSave}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-brand-purple text-white hover:bg-brand-purpleDeep disabled:bg-bg-elevated disabled:text-text-muted disabled:cursor-not-allowed transition-colors"
-          >
-            <Sparkles size={14} />
-            Save Reflection
-          </button>
+          
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={dismiss}
+              className="px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+            >
+              Skip
+            </button>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!canSave}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-brand-purple text-white hover:bg-brand-purpleDeep disabled:bg-bg-elevated disabled:text-text-muted disabled:cursor-not-allowed transition-colors"
+            >
+              <Sparkles size={14} />
+              Save Reflection
+            </button>
+          </div>
         </div>
       </div>
     </Modal>

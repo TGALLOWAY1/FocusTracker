@@ -13,6 +13,8 @@ import { LogManualTimeModal } from "./LogManualTimeModal";
 import { ProjectFocusDonutPanel } from "./ProjectFocusDonutPanel";
 import { ProjectsQuickFiltersPanel } from "./ProjectsQuickFiltersPanel";
 import { StayConsistentPanel } from "./StayConsistentPanel";
+import { useUIStore } from "../../state/uiStore";
+import { PanelRightClose } from "lucide-react";
 
 export type ProjectsSort = "recent" | "name" | "progress" | "focusTime";
 export type ProjectsView = "grid" | "list";
@@ -147,6 +149,8 @@ function EmptyState({ onNew }: { onNew: () => void }) {
 }
 
 export function ProjectsPage() {
+  const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
+  const toggleRightSidebar = useUIStore((s) => s.toggleRightSidebar);
   const projects = useProjectStore((s) => s.projects);
   const stats = useAllProjectStats();
 
@@ -237,15 +241,24 @@ export function ProjectsPage() {
         )}
       </main>
 
-      <aside className="hidden lg:flex flex-col gap-5 border-l border-border-subtle p-6 min-h-0 overflow-y-auto scrollbar-thin">
-        <ProjectFocusDonutPanel projects={projects} stats={stats} />
-        <ProjectsQuickFiltersPanel
-          projects={projects}
-          active={statusFilter}
-          onChange={setStatusFilter}
-        />
-        <StayConsistentPanel />
-      </aside>
+      {rightSidebarOpen && (
+        <aside className="relative hidden lg:flex flex-col gap-5 border-l border-border-subtle p-6 min-h-0 overflow-y-auto scrollbar-thin">
+          <button
+            onClick={toggleRightSidebar}
+            className="absolute top-4 right-4 z-10 p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-elevated rounded-md transition-colors"
+            title="Collapse side panel"
+          >
+            <PanelRightClose size={16} />
+          </button>
+          <ProjectFocusDonutPanel projects={projects} stats={stats} />
+          <ProjectsQuickFiltersPanel
+            projects={projects}
+            active={statusFilter}
+            onChange={setStatusFilter}
+          />
+          <StayConsistentPanel />
+        </aside>
+      )}
 
       {creating && (
         <ProjectFormModal

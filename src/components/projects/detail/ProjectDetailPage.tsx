@@ -31,6 +31,8 @@ import { ProjectLinksCard } from "./ProjectLinksCard";
 import { ProjectSessionsPanel } from "./ProjectSessionsPanel";
 import { ProjectNotesPanel } from "./ProjectNotesPanel";
 import { CurrentFocusCard } from "./CurrentFocusCard";
+import { useUIStore } from "../../../state/uiStore";
+import { PanelRightClose } from "lucide-react";
 
 const EVENT_ICON: Record<ProjectEventKind, typeof CheckCircle2> = {
   session_completed: PlayCircle,
@@ -60,6 +62,8 @@ const EVENT_ICON_COLOR: Record<ProjectEventKind, string> = {
 };
 
 export function ProjectDetailPage() {
+  const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
+  const toggleRightSidebar = useUIStore((s) => s.toggleRightSidebar);
   const { projectId } = useParams<{ projectId: string }>();
   const project = useProjectStore((s) =>
     s.projects.find((p) => p.id === projectId)
@@ -185,73 +189,82 @@ export function ProjectDetailPage() {
         {renderMain()}
       </main>
 
-      <aside className="hidden lg:flex flex-col gap-5 border-l border-border-subtle p-6 min-h-0 overflow-y-auto scrollbar-thin">
-        <Card>
-          <CardHeader
-            title="Focus Time Breakdown"
-            trailing={
-              <span className="text-[11px] text-text-muted uppercase tracking-wider">
-                All time
-              </span>
-            }
-          />
-          {focusBreakdown.length === 0 ? (
-            <div className="mt-4 text-sm text-text-muted text-center py-6">
-              No focus data yet.
-            </div>
-          ) : (
-            <>
-              <div className="mt-4 max-w-[200px] mx-auto">
-                <CategoryDonut
-                  slices={focusBreakdown.map((s) => ({
-                    category: s.category,
-                    percent: s.percent,
-                    minutes: s.minutes,
-                  }))}
-                  centerLabel={formatHM(totalDonutMinutes)}
-                  centerSub="Total"
-                  size={168}
-                  thickness={18}
-                />
+      {rightSidebarOpen && (
+        <aside className="relative hidden lg:flex flex-col gap-5 border-l border-border-subtle p-6 min-h-0 overflow-y-auto scrollbar-thin">
+          <button
+            onClick={toggleRightSidebar}
+            className="absolute top-4 right-4 z-10 p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-elevated rounded-md transition-colors"
+            title="Collapse side panel"
+          >
+            <PanelRightClose size={16} />
+          </button>
+          <Card>
+            <CardHeader
+              title="Focus Time Breakdown"
+              trailing={
+                <span className="text-[11px] text-text-muted uppercase tracking-wider">
+                  All time
+                </span>
+              }
+            />
+            {focusBreakdown.length === 0 ? (
+              <div className="mt-4 text-sm text-text-muted text-center py-6">
+                No focus data yet.
               </div>
-              <ul className="mt-4 flex flex-col gap-2">
-                {focusBreakdown.map((slice) => {
-                  const meta = ACTIVITY_CATEGORIES[slice.category];
-                  return (
-                    <li
-                      key={slice.category}
-                      className="flex items-center gap-2.5 text-xs"
-                    >
-                      <span
-                        className="w-2.5 h-2.5 rounded-full shrink-0"
-                        style={{ background: meta.color }}
-                      />
-                      <span className="text-text-primary font-medium flex-1 truncate">
-                        {meta.label}
-                      </span>
-                      <span className="text-text-secondary tabular-nums">
-                        {formatHM(slice.minutes)}
-                      </span>
-                      <span className="text-text-muted tabular-nums w-10 text-right">
-                        {Math.round(slice.percent * 100)}%
-                      </span>
-                    </li>
-                  );
-                })}
-              </ul>
-            </>
-          )}
-        </Card>
+            ) : (
+              <>
+                <div className="mt-4 max-w-[200px] mx-auto">
+                  <CategoryDonut
+                    slices={focusBreakdown.map((s) => ({
+                      category: s.category,
+                      percent: s.percent,
+                      minutes: s.minutes,
+                    }))}
+                    centerLabel={formatHM(totalDonutMinutes)}
+                    centerSub="Total"
+                    size={168}
+                    thickness={18}
+                  />
+                </div>
+                <ul className="mt-4 flex flex-col gap-2">
+                  {focusBreakdown.map((slice) => {
+                    const meta = ACTIVITY_CATEGORIES[slice.category];
+                    return (
+                      <li
+                        key={slice.category}
+                        className="flex items-center gap-2.5 text-xs"
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ background: meta.color }}
+                        />
+                        <span className="text-text-primary font-medium flex-1 truncate">
+                          {meta.label}
+                        </span>
+                        <span className="text-text-secondary tabular-nums">
+                          {formatHM(slice.minutes)}
+                        </span>
+                        <span className="text-text-muted tabular-nums w-10 text-right">
+                          {Math.round(slice.percent * 100)}%
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </>
+            )}
+          </Card>
 
-        <ActivityFeedCard entries={activityEntries} />
+          <ActivityFeedCard entries={activityEntries} />
 
-        <ProjectNotesPanel
-          project={project}
-          compact
-          limit={2}
-          onViewAll={() => setTab("notes")}
-        />
-      </aside>
+          <ProjectNotesPanel
+            project={project}
+            compact
+            limit={2}
+            onViewAll={() => setTab("notes")}
+          />
+        </aside>
+      )}
 
       {editing && (
         <ProjectFormModal
