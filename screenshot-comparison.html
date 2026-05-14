@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>FocusTracker — Screenshot Comparison</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #0f1115;
+        --panel: #181b22;
+        --border: #2a2f3a;
+        --text: #e6e8ee;
+        --muted: #9aa3b2;
+        --before: #f59e0b;
+        --after: #22c55e;
+      }
+      @media (prefers-color-scheme: light) {
+        :root {
+          --bg: #f6f7fa;
+          --panel: #ffffff;
+          --border: #e3e6ee;
+          --text: #1a1d24;
+          --muted: #5b6473;
+        }
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.4;
+        padding: 2rem clamp(1rem, 4vw, 3rem);
+      }
+      header {
+        max-width: 1600px;
+        margin: 0 auto 2rem;
+      }
+      h1 { margin: 0 0 0.25rem; font-size: 1.5rem; }
+      header p { margin: 0; color: var(--muted); font-size: 0.95rem; }
+      nav {
+        margin-top: 1rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+      }
+      nav a {
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.25rem 0.6rem;
+        border: 1px solid var(--border);
+        border-radius: 999px;
+      }
+      nav a:hover { border-color: var(--text); }
+      main { max-width: 1600px; margin: 0 auto; }
+      section.route {
+        margin: 0 0 3rem;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.25rem;
+      }
+      section.route h2 {
+        margin: 0 0 0.25rem;
+        font-size: 1.1rem;
+      }
+      section.route .path {
+        color: var(--muted);
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 0.85rem;
+        margin: 0 0 1rem;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      @media (max-width: 900px) {
+        .pair { grid-template-columns: 1fr; }
+      }
+      figure {
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      figcaption {
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+      figcaption .dot {
+        display: inline-block;
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+      }
+      figcaption.before .dot { background: var(--before); }
+      figcaption.after .dot { background: var(--after); }
+      a.img-link { display: block; }
+      img {
+        display: block;
+        width: 100%;
+        height: auto;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        background: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>FocusTracker — Screenshot Comparison</h1>
+      <p>Before vs. after for each app route. Click any image to open the full-resolution PNG.</p>
+      <nav>
+        <a href="#today">/today</a>
+        <a href="#projects">/projects</a>
+        <a href="#project-detail">/projects/:id</a>
+        <a href="#learning">/learning</a>
+        <a href="#insights">/insights</a>
+      </nav>
+    </header>
+    <main>
+      <section class="route" id="today">
+        <h2>Today</h2>
+        <p class="path">/today</p>
+        <div class="pair">
+          <figure>
+            <figcaption class="before"><span class="dot"></span>Before</figcaption>
+            <a class="img-link" href="screenshots-before/today.png"><img src="screenshots-before/today.png" alt="Today — before" /></a>
+          </figure>
+          <figure>
+            <figcaption class="after"><span class="dot"></span>After</figcaption>
+            <a class="img-link" href="screenshots/today.png"><img src="screenshots/today.png" alt="Today — after" /></a>
+          </figure>
+        </div>
+      </section>
+
+      <section class="route" id="projects">
+        <h2>Projects</h2>
+        <p class="path">/projects</p>
+        <div class="pair">
+          <figure>
+            <figcaption class="before"><span class="dot"></span>Before</figcaption>
+            <a class="img-link" href="screenshots-before/projects.png"><img src="screenshots-before/projects.png" alt="Projects — before" /></a>
+          </figure>
+          <figure>
+            <figcaption class="after"><span class="dot"></span>After</figcaption>
+            <a class="img-link" href="screenshots/projects.png"><img src="screenshots/projects.png" alt="Projects — after" /></a>
+          </figure>
+        </div>
+      </section>
+
+      <section class="route" id="project-detail">
+        <h2>Project detail</h2>
+        <p class="path">/projects/ml-model-trainer</p>
+        <div class="pair">
+          <figure>
+            <figcaption class="before"><span class="dot"></span>Before</figcaption>
+            <a class="img-link" href="screenshots-before/project-detail.png"><img src="screenshots-before/project-detail.png" alt="Project detail — before" /></a>
+          </figure>
+          <figure>
+            <figcaption class="after"><span class="dot"></span>After</figcaption>
+            <a class="img-link" href="screenshots/project-detail.png"><img src="screenshots/project-detail.png" alt="Project detail — after" /></a>
+          </figure>
+        </div>
+      </section>
+
+      <section class="route" id="learning">
+        <h2>Learning</h2>
+        <p class="path">/learning</p>
+        <div class="pair">
+          <figure>
+            <figcaption class="before"><span class="dot"></span>Before</figcaption>
+            <a class="img-link" href="screenshots-before/learning.png"><img src="screenshots-before/learning.png" alt="Learning — before" /></a>
+          </figure>
+          <figure>
+            <figcaption class="after"><span class="dot"></span>After</figcaption>
+            <a class="img-link" href="screenshots/learning.png"><img src="screenshots/learning.png" alt="Learning — after" /></a>
+          </figure>
+        </div>
+      </section>
+
+      <section class="route" id="insights">
+        <h2>Insights</h2>
+        <p class="path">/insights</p>
+        <div class="pair">
+          <figure>
+            <figcaption class="before"><span class="dot"></span>Before</figcaption>
+            <a class="img-link" href="screenshots-before/insights.png"><img src="screenshots-before/insights.png" alt="Insights — before" /></a>
+          </figure>
+          <figure>
+            <figcaption class="after"><span class="dot"></span>After</figcaption>
+            <a class="img-link" href="screenshots/insights.png"><img src="screenshots/insights.png" alt="Insights — after" /></a>
+          </figure>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>
