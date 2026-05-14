@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { AtSign, Image, Plus, X } from "lucide-react";
-import type { LearningSubtopic } from "../../data/learningPath";
+import { AtSign, FileText, Image, Plus, X } from "lucide-react";
+import type { LearningNote, LearningSubtopic } from "../../data/learningPath";
 import type { RightTab } from "../../state/learningStore";
 import { NotionSyncCard } from "./NotionSyncCard";
 import { NoteContent } from "./NoteContent";
@@ -11,6 +11,14 @@ type Props = {
   activeTab: RightTab;
   onTabChange: (tab: RightTab) => void;
   onAppendNote: (subtopicId: string, text: string) => void;
+  onUpdateNote: (partial: Partial<LearningNote>) => void;
+  onUpdateUserParagraph: (
+    subtopicId: string,
+    index: number,
+    text: string
+  ) => void;
+  onRemoveUserParagraph: (subtopicId: string, index: number) => void;
+  onStartNote: () => void;
 };
 
 const TABS: { id: RightTab; label: string; count?: (s: LearningSubtopic | null) => number }[] = [
@@ -27,6 +35,27 @@ function EmptyState({ message }: { message: string }) {
   return (
     <div className="rounded-xl border border-dashed border-border-subtle p-6 text-sm text-text-muted text-center">
       {message}
+    </div>
+  );
+}
+
+function StartNoteCard({ onStart }: { onStart: () => void }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border-subtle p-6 text-center flex flex-col items-center gap-3">
+      <div className="w-10 h-10 rounded-xl bg-bg-elevated flex items-center justify-center">
+        <FileText size={18} className="text-text-secondary" />
+      </div>
+      <div className="text-sm text-text-secondary">
+        No notes yet for this subtopic.
+      </div>
+      <button
+        type="button"
+        onClick={onStart}
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-brand-purple text-white text-xs font-medium hover:bg-brand-purpleDeep transition-colors"
+      >
+        <Plus size={12} />
+        Start notes
+      </button>
     </div>
   );
 }
@@ -70,16 +99,14 @@ function TabBar({
 
 function AddNoteInput({
   onSubmit,
-  disabled,
 }: {
   onSubmit: (text: string) => void;
-  disabled: boolean;
 }) {
   const [value, setValue] = useState("");
 
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!value.trim() || disabled) return;
+    if (!value.trim()) return;
     onSubmit(value);
     setValue("");
   }
@@ -94,12 +121,11 @@ function AddNoteInput({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder="Add a note..."
-        disabled={disabled}
-        className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none disabled:opacity-50"
+        className="flex-1 min-w-0 bg-transparent text-sm text-text-primary placeholder:text-text-muted focus:outline-none"
       />
       <button
         type="submit"
-        disabled={disabled || !value.trim()}
+        disabled={!value.trim()}
         className="w-7 h-7 rounded-md flex items-center justify-center text-text-secondary hover:text-brand-purple hover:bg-bg-elevated disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         aria-label="Add note"
       >
@@ -132,6 +158,10 @@ export function NotesPanel({
   activeTab,
   onTabChange,
   onAppendNote,
+  onUpdateNote,
+  onUpdateUserParagraph,
+  onRemoveUserParagraph,
+  onStartNote,
 }: Props) {
   if (!subtopic) {
     return (
@@ -170,9 +200,18 @@ export function NotesPanel({
           <div className="flex flex-col gap-4">
             <NotionSyncCard />
             {subtopic.note ? (
-              <NoteContent note={subtopic.note} />
+              <NoteContent
+                note={subtopic.note}
+                onUpdate={onUpdateNote}
+                onUpdateUserParagraph={(index, text) =>
+                  onUpdateUserParagraph(subtopic.id, index, text)
+                }
+                onRemoveUserParagraph={(index) =>
+                  onRemoveUserParagraph(subtopic.id, index)
+                }
+              />
             ) : (
-              <EmptyState message="No notes yet for this subtopic." />
+              <StartNoteCard onStart={onStartNote} />
             )}
           </div>
         )}
@@ -189,7 +228,6 @@ export function NotesPanel({
       {activeTab === "notes" && (
         <AddNoteInput
           onSubmit={(text) => onAppendNote(subtopic.id, text)}
-          disabled={!subtopic.note}
         />
       )}
     </div>

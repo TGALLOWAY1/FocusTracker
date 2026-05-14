@@ -1,4 +1,4 @@
-import { List, Map, Settings } from "lucide-react";
+import { List, Map, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
 import type { ViewMode } from "../../state/learningStore";
 
 type Props = {
@@ -6,6 +6,8 @@ type Props = {
   subtitle: string;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
+  overviewVisible: boolean;
+  onToggleOverview: () => void;
 };
 
 function ActivePathPill() {
@@ -54,6 +56,8 @@ export function LearningHeader({
   subtitle,
   viewMode,
   onViewModeChange,
+  overviewVisible,
+  onToggleOverview,
 }: Props) {
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap p-6 pb-4 border-b border-border-subtle">
@@ -74,6 +78,19 @@ export function LearningHeader({
 
       <div className="flex items-center gap-2">
         <ViewToggle viewMode={viewMode} onChange={onViewModeChange} />
+        <button
+          type="button"
+          onClick={onToggleOverview}
+          aria-pressed={!overviewVisible}
+          title={overviewVisible ? "Hide overview" : "Show overview"}
+          className="w-9 h-9 rounded-lg bg-bg-elevated flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
+        >
+          {overviewVisible ? (
+            <PanelLeftClose size={16} />
+          ) : (
+            <PanelLeftOpen size={16} />
+          )}
+        </button>
         <button
           type="button"
           disabled
