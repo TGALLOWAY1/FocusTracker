@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useFocusStore, type SessionStatus } from "../../state/focusStore";
+import { useFocusProjectName } from "../../state/useFocusProjectName";
 import { formatMMSS } from "../../utils/time";
 
 function StatusDot({ status }: { status: SessionStatus }) {
@@ -195,10 +196,10 @@ function FlagsStrip() {
 
 function IdleState() {
   const start = useFocusStore((s) => s.start);
-  const project = useFocusStore((s) => s.project);
+  const project = useFocusProjectName();
   const durationSec = useFocusStore((s) => s.durationSec);
   return (
-    <div className="relative h-[480px] flex flex-col items-center justify-center text-center px-8">
+    <div className="relative h-[420px] flex flex-col items-center justify-center text-center px-8">
       <SunsetBackdrop />
       <div className="relative z-10">
         <div className="text-xs uppercase tracking-wider text-white/70 mb-2">
@@ -225,7 +226,7 @@ function IdleState() {
 
 function ActiveState() {
   const status = useFocusStore((s) => s.status);
-  const project = useFocusStore((s) => s.project);
+  const project = useFocusProjectName();
   const task = useFocusStore((s) => s.task);
   const remainingSec = useFocusStore((s) => s.remainingSec);
   const durationSec = useFocusStore((s) => s.durationSec);
@@ -240,7 +241,7 @@ function ActiveState() {
     <div className="relative">
       <SunsetBackdrop />
 
-      <div className="relative z-10 px-6 pt-5 pb-6">
+      <div className="relative z-10 px-6 pt-4 pb-5">
         {/* header row */}
         <div className="flex items-center justify-between">
           <div className="inline-flex items-center gap-2 text-sm font-medium text-white">
@@ -312,7 +313,10 @@ export function FocusSessionCard() {
   }, [status, tick]);
 
   return (
-    <section className="bg-bg-card border border-border-subtle rounded-2xl shadow-card overflow-hidden">
+    <section
+      id="focus-session-card"
+      className="bg-bg-card border border-border-subtle rounded-2xl shadow-card overflow-hidden scroll-mt-6"
+    >
       {status === "idle" ? <IdleState /> : <ActiveState />}
       <FlagsStrip />
     </section>

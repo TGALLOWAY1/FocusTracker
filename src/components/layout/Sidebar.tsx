@@ -1,9 +1,12 @@
 import { ChevronRight, Flame, Target, Star } from "lucide-react";
-import { NAV_ITEMS, ACTIVE_NAV_ID } from "../../data/navItems";
+import { NavLink } from "react-router-dom";
+import { NAV_ITEMS } from "../../data/navItems";
 import { Card } from "../ui/Card";
+import { Eyebrow } from "../ui/Eyebrow";
 import { useFocusStore } from "../../state/focusStore";
+import { useWeeklyStats } from "../../state/useWeeklyStats";
+import { useStreaks } from "../../state/useStreaks";
 import { FOCUS_TIERS, getTier } from "../../data/focusTiers";
-import { WEEK_STATS } from "../../data/focusStats";
 import { clamp } from "../../utils/time";
 
 function FocusLadderLogo() {
@@ -44,29 +47,33 @@ function NavList() {
     <nav className="mt-6 flex flex-col gap-1 px-2">
       {NAV_ITEMS.map((item) => {
         const Icon = item.icon;
-        const active = item.id === ACTIVE_NAV_ID;
+
+        const rowClasses = (active: boolean) =>
+          [
+            "flex items-center gap-3 px-3 py-2.5 rounded-xl select-none transition-colors",
+            active
+              ? "bg-brand-purpleSoft text-text-primary border border-brand-purple/20"
+              : "text-text-secondary hover:bg-bg-cardHover hover:text-text-primary border border-transparent",
+          ].join(" ");
+
         return (
-          <div
+          <NavLink
             key={item.id}
-            className={[
-              "flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-default select-none transition-colors",
-              active
-                ? "bg-brand-purpleSoft text-text-primary border border-brand-purple/20"
-                : "text-text-secondary hover:bg-bg-cardHover hover:text-text-primary border border-transparent",
-            ].join(" ")}
+            to={item.path}
+            end={item.path === "/today"}
+            className={({ isActive }) => rowClasses(isActive)}
           >
-            <Icon
-              size={18}
-              className={active ? "text-brand-purple" : "text-text-secondary"}
-              strokeWidth={2}
-            />
-            <span className="text-sm font-medium flex-1">{item.label}</span>
-            {item.badge !== undefined && (
-              <span className="text-[11px] font-semibold text-text-secondary bg-bg-elevated rounded-md px-2 py-0.5">
-                {item.badge}
-              </span>
+            {({ isActive }) => (
+              <>
+                <Icon
+                  size={18}
+                  className={isActive ? "text-brand-purple" : "text-text-secondary"}
+                  strokeWidth={2}
+                />
+                <span className="text-sm font-medium flex-1">{item.label}</span>
+              </>
             )}
-          </div>
+          </NavLink>
         );
       })}
     </nav>
@@ -113,9 +120,7 @@ function FocusTierCard() {
     <Card className="relative overflow-hidden">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-            Focus Tier
-          </div>
+          <Eyebrow>Focus Tier</Eyebrow>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-2xl font-semibold text-brand-purple">
               {tier.label}
@@ -174,9 +179,7 @@ function StreakRow({ value, unit, label, iconBg, iconColor, Icon }: StreakRowPro
         <span className="text-lg font-semibold text-text-primary leading-none">
           {value}
         </span>
-        <span className="text-[11px] uppercase tracking-wider text-text-muted">
-          {unit}
-        </span>
+        <Eyebrow as="span">{unit}</Eyebrow>
       </div>
       <span className="ml-auto text-xs text-text-secondary truncate">{label}</span>
     </div>
@@ -184,15 +187,13 @@ function StreakRow({ value, unit, label, iconBg, iconColor, Icon }: StreakRowPro
 }
 
 function StreaksCard() {
-  const focusStreakDays = useFocusStore((s) => s.focusStreakDays);
-  const projectStreakDays = useFocusStore((s) => s.projectStreakDays);
-  const deepWorkHours = Math.floor(WEEK_STATS.totalMinutes / 60);
+  const { focusStreakDays, projectStreakDays } = useStreaks();
+  const weeklyStats = useWeeklyStats();
+  const deepWorkHours = Math.floor(weeklyStats.totalMinutes / 60);
 
   return (
     <Card>
-      <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium mb-4">
-        Current Streaks
-      </div>
+      <Eyebrow className="mb-4">Current Streaks</Eyebrow>
       <div className="flex flex-col gap-3">
         <StreakRow
           value={String(focusStreakDays)}

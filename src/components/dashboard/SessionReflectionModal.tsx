@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, Sparkles } from "lucide-react";
 import { Modal } from "../ui/Modal";
+import { Eyebrow } from "../ui/Eyebrow";
 import { useFocusStore, type CompletedSession } from "../../state/focusStore";
 import { formatMMSS } from "../../utils/time";
 
@@ -50,7 +51,7 @@ function SessionSummary({ session }: { session: CompletedSession }) {
   return (
     <div className="rounded-xl border border-border-subtle bg-bg-elevated px-4 py-3 flex items-center justify-between gap-3">
       <div className="min-w-0">
-        <div className="text-xs text-text-muted">{session.project}</div>
+        <div className="text-xs text-text-muted">{session.projectName}</div>
         <div className="text-sm font-semibold text-text-primary truncate">
           {session.task || "Focus Session"}
         </div>
@@ -75,14 +76,14 @@ function FieldLabel({
   optional?: boolean;
 }) {
   return (
-    <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium mb-2">
+    <Eyebrow className="mb-2">
       {children}
       {optional && (
         <span className="ml-1.5 text-text-muted/70 normal-case tracking-normal">
           (optional)
         </span>
       )}
-    </div>
+    </Eyebrow>
   );
 }
 
@@ -93,14 +94,14 @@ export function SessionReflectionModal() {
 
   const [focusLevel, setFocusLevel] = useState(0);
   const [energyLevel, setEnergyLevel] = useState(0);
-  const [distraction, setDistraction] = useState("");
+  const [reflectionText, setReflectionText] = useState("");
   const [completedPlanned, setCompletedPlanned] = useState(false);
 
   useEffect(() => {
     if (!pending) return;
     setFocusLevel(0);
     setEnergyLevel(0);
-    setDistraction("");
+    setReflectionText("");
     setCompletedPlanned(pending.completedNaturally);
   }, [pending?.id, pending]);
 
@@ -114,7 +115,7 @@ export function SessionReflectionModal() {
       sessionId: pending.id,
       focusLevel,
       energyLevel,
-      biggestDistraction: distraction.trim() || undefined,
+      reflection: reflectionText.trim() || undefined,
       completedPlanned,
       createdAt: Date.now(),
     });
@@ -159,12 +160,13 @@ export function SessionReflectionModal() {
         </div>
 
         <div>
-          <FieldLabel optional>Biggest distraction</FieldLabel>
-          <input
-            value={distraction}
-            onChange={(e) => setDistraction(e.target.value)}
-            placeholder="What pulled at your attention?"
-            className="w-full bg-bg-elevated border border-border-subtle rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none focus:border-brand-purple/50 transition-colors"
+          <FieldLabel optional>Reflection</FieldLabel>
+          <textarea
+            value={reflectionText}
+            onChange={(e) => setReflectionText(e.target.value)}
+            placeholder="What stood out? How did this session feel?"
+            rows={3}
+            className="w-full bg-bg-elevated border border-border-subtle rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none focus:border-brand-purple/50 transition-colors resize-none"
           />
         </div>
 

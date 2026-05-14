@@ -38,10 +38,14 @@ export function MainContent() {
   const [planOpen, setPlanOpen] = useState(false);
 
   return (
-    <main className="flex flex-col gap-5 p-6 min-w-0 overflow-y-auto scrollbar-thin">
+    <main className="flex flex-col p-6 min-w-0 overflow-y-auto scrollbar-thin">
       <Greeting onPlan={() => setPlanOpen(true)} />
-      <FocusSessionCard />
-      <IdeaParkingLot />
+      <div className="mt-5">
+        <FocusSessionCard />
+      </div>
+      <div className="mt-3">
+        <IdeaParkingLot />
+      </div>
       <PlanMyDayModal open={planOpen} onClose={() => setPlanOpen(false)} />
       <SessionReflectionModal />
     </main>

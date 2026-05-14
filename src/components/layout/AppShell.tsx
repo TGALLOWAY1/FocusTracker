@@ -1,7 +1,11 @@
+import { Routes, Route, Navigate } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
-import { MainContent } from "./MainContent";
-import { RightPanel } from "./RightPanel";
+import { TodayPage } from "./TodayPage";
 import { BottomBar } from "./BottomBar";
+import { InsightsPage } from "../insights/InsightsPage";
+import { LearningPathPage } from "../learning/LearningPathPage";
+import { ProjectsPage } from "../projects/ProjectsPage";
+import { ProjectDetailPage } from "../projects/detail/ProjectDetailPage";
 
 export function AppShell() {
   return (
@@ -11,13 +15,20 @@ export function AppShell() {
           flex-1 min-h-0
           grid gap-0
           grid-cols-1
-          lg:grid-cols-[240px_minmax(0,1fr)_320px]
-          xl:grid-cols-[240px_minmax(0,1fr)_360px]
+          lg:grid-cols-[240px_minmax(0,1fr)_400px]
+          xl:grid-cols-[240px_minmax(0,1fr)_460px]
         "
       >
         <Sidebar />
-        <MainContent />
-        <RightPanel />
+        <Routes>
+          <Route path="/" element={<Navigate to="/today" replace />} />
+          <Route path="/today" element={<TodayPage />} />
+          <Route path="/projects" element={<ProjectsPage />} />
+          <Route path="/projects/:projectId" element={<ProjectDetailPage />} />
+          <Route path="/learning" element={<LearningPathPage />} />
+          <Route path="/insights" element={<InsightsPage />} />
+          <Route path="*" element={<Navigate to="/today" replace />} />
+        </Routes>
       </div>
       <BottomBar />
     </div>

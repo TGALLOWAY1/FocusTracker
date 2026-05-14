@@ -1,28 +1,8 @@
 import { ChevronDown } from "lucide-react";
 import { Card, CardHeader } from "../ui/Card";
-import { WEEK_STATS, type DayStat, type FocusStatsData } from "../../data/focusStats";
+import { SummaryStrip, type SummaryItem } from "../ui/SummaryStrip";
+import type { DayStat, FocusStatsData } from "../../data/focusStats";
 import { formatHM } from "../../utils/time";
-
-type StatProps = {
-  value: string;
-  label: string;
-  valueClass: string;
-};
-
-function Stat({ value, label, valueClass }: StatProps) {
-  return (
-    <div className="min-w-0">
-      <div
-        className={`text-[26px] leading-none font-semibold tracking-tight tabular-nums ${valueClass}`}
-      >
-        {value}
-      </div>
-      <div className="mt-1.5 text-[11px] text-text-secondary leading-tight">
-        {label}
-      </div>
-    </div>
-  );
-}
 
 type WeeklyBarChartProps = {
   daily: DayStat[];
@@ -31,16 +11,16 @@ type WeeklyBarChartProps = {
 
 function WeeklyBarChart({ daily, maxYHours }: WeeklyBarChartProps) {
   const width = 320;
-  const height = 168;
-  const padLeft = 26;
+  const height = 110;
+  const padLeft = 24;
   const padRight = 4;
-  const padTop = 8;
-  const padBottom = 24;
+  const padTop = 6;
+  const padBottom = 20;
   const chartW = width - padLeft - padRight;
   const chartH = height - padTop - padBottom;
   const slotW = chartW / daily.length;
-  const barW = 18;
-  const yTicks = [0, maxYHours / 2, maxYHours];
+  const barW = 14;
+  const yTicks = [0, maxYHours];
 
   const summary = daily
     .map((d) => `${d.day}: ${formatHM(Math.round(d.hours * 60))}`)
@@ -54,7 +34,6 @@ function WeeklyBarChart({ daily, maxYHours }: WeeklyBarChartProps) {
       role="img"
       aria-label={`Weekly focus hours by day: ${summary}`}
     >
-      {/* Y axis gridlines + labels */}
       {yTicks.map((v) => {
         const y = padTop + chartH - (v / maxYHours) * chartH;
         return (
@@ -80,7 +59,6 @@ function WeeklyBarChart({ daily, maxYHours }: WeeklyBarChartProps) {
         );
       })}
 
-      {/* Bars + day labels */}
       {daily.map((d, i) => {
         const ratio = Math.min(1, d.hours / maxYHours);
         const barH = Math.max(2, ratio * chartH);
@@ -93,12 +71,12 @@ function WeeklyBarChart({ daily, maxYHours }: WeeklyBarChartProps) {
               y={y}
               width={barW}
               height={barH}
-              rx={4}
+              rx={3}
               fill="#8B7CF6"
             />
             <text
               x={x + barW / 2}
-              y={height - 6}
+              y={height - 5}
               textAnchor="middle"
               fontSize={10}
               fill="#A3ABBF"
@@ -122,35 +100,33 @@ function RangeIndicator() {
 }
 
 type FocusStatsPanelProps = {
-  data?: FocusStatsData;
+  data: FocusStatsData;
 };
 
-export function FocusStatsPanel({ data = WEEK_STATS }: FocusStatsPanelProps) {
-  const completionPct = Math.round(data.completionRate * 100);
+export function FocusStatsPanel({ data }: FocusStatsPanelProps) {
+  const isEmpty = data.sessionCount === 0;
+  const items: SummaryItem[] = [
+    {
+      value: isEmpty ? "—" : formatHM(data.totalMinutes),
+      label: "Focus",
+    },
+    {
+      value: isEmpty ? "0" : String(data.sessionCount),
+      label: data.sessionCount === 1 ? "Session" : "Sessions",
+    },
+    {
+      value: isEmpty ? "—" : `${Math.round(data.completionRate * 100)}%`,
+      label: "Completion",
+    },
+  ];
 
   return (
     <Card>
       <CardHeader title="Focus Stats" trailing={<RangeIndicator />} />
-
-      <div className="mt-4 grid grid-cols-3 gap-3">
-        <Stat
-          value={formatHM(data.totalMinutes)}
-          label="Total Focus Time"
-          valueClass="text-accent-green"
-        />
-        <Stat
-          value={String(data.sessionCount)}
-          label="Sessions"
-          valueClass="text-brand-purple"
-        />
-        <Stat
-          value={`${completionPct}%`}
-          label="Completion Rate"
-          valueClass="text-accent-yellow"
-        />
+      <div className="mt-3">
+        <SummaryStrip items={items} ariaLabel="This week's focus stats" />
       </div>
-
-      <div className="mt-5">
+      <div className="mt-4">
         <WeeklyBarChart daily={data.daily} maxYHours={data.maxYHours} />
       </div>
     </Card>
