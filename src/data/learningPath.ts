@@ -7,6 +7,13 @@ export type LearningResource = {
   title: string;
   kind: LearningResourceKind;
   meta?: string;
+  url?: string;
+};
+
+export type LearningTask = {
+  id: string;
+  title: string;
+  completed: boolean;
 };
 
 export type LearningNote = {
@@ -17,6 +24,7 @@ export type LearningNote = {
   insight: string;
   code: { language: string; source: string };
   userParagraphs: string[];
+  attachments?: { id: string; dataUrl: string; name?: string }[];
 };
 
 export type LearningSubtopic = {
@@ -27,6 +35,7 @@ export type LearningSubtopic = {
   status: SubtopicStatus;
   progress?: number;
   resources?: LearningResource[];
+  tasks?: LearningTask[];
   children?: LearningSubtopic[];
   note?: LearningNote;
 };
@@ -45,6 +54,8 @@ export type LearningPath = {
   title: string;
   subtitle: string;
   modules: LearningModule[];
+  notionUrl?: string;
+  lastSyncedAt?: number;
 };
 
 const ML_WORKFLOW_RESOURCES: LearningResource[] = [

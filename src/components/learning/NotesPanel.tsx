@@ -5,6 +5,9 @@ import type { RightTab } from "../../state/learningStore";
 import { NotionSyncCard } from "./NotionSyncCard";
 import { NoteContent } from "./NoteContent";
 import { ResourceList } from "./ResourceList";
+import { TaskList } from "./TaskList";
+import { resizeImageToDataUrl } from "../../utils/image";
+import { useLearningStore } from "../../state/learningStore";
 
 type Props = {
   subtopic: LearningSubtopic | null;
@@ -28,7 +31,11 @@ const TABS: { id: RightTab; label: string; count?: (s: LearningSubtopic | null) 
     label: "Resources",
     count: (s) => s?.resources?.length ?? 0,
   },
-  { id: "tasks", label: "Tasks", count: () => 3 },
+  { 
+    id: "tasks", 
+    label: "Tasks", 
+    count: (s) => s?.tasks?.length ?? 0 
+  },
 ];
 
 function EmptyState({ message }: { message: string }) {
@@ -99,8 +106,10 @@ function TabBar({
 
 function AddNoteInput({
   onSubmit,
+  onImageSelected,
 }: {
   onSubmit: (text: string) => void;
+  onImageSelected: (dataUrl: string, name: string) => void;
 }) {
   const [value, setValue] = useState("");
 
@@ -110,6 +119,18 @@ function AddNoteInput({
     onSubmit(value);
     setValue("");
   }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const dataUrl = await resizeImageToDataUrl(file, 800, 800);
+      onImageSelected(dataUrl, file.name);
+    } catch (err) {
+      console.error("Failed to load image:", err);
+    }
+    e.target.value = "";
+  };
 
   return (
     <form
@@ -131,15 +152,18 @@ function AddNoteInput({
       >
         <Plus size={14} />
       </button>
-      <button
-        type="button"
-        disabled
-        aria-disabled="true"
-        title="Coming soon"
-        className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted cursor-not-allowed opacity-70"
+      <label
+        className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-elevated cursor-pointer transition-colors"
+        title="Attach Image"
       >
+        <input
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
         <Image size={14} />
-      </button>
+      </label>
       <button
         type="button"
         disabled
@@ -221,13 +245,14 @@ export function NotesPanel({
         )}
 
         {activeTab === "tasks" && (
-          <EmptyState message="Tasks are coming soon." />
+          <TaskList subtopicId={subtopic.id} tasks={subtopic.tasks ?? []} />
         )}
       </div>
 
       {activeTab === "notes" && (
         <AddNoteInput
           onSubmit={(text) => onAppendNote(subtopic.id, text)}
+          onImageSelected={(dataUrl, name) => useLearningStore.getState().addNoteAttachment(subtopic.id, dataUrl, name)}
         />
       )}
     </div>

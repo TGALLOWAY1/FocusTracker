@@ -177,6 +177,37 @@ export function NoteContent({
           ))}
         </div>
       )}
+
+      {(note.attachments ?? []).length > 0 && (
+        <div className="flex flex-col gap-3 border-t border-border-subtle pt-4">
+          <h4 className="text-sm font-semibold text-text-primary">Attachments</h4>
+          <div className="grid grid-cols-2 gap-3">
+            {note.attachments?.map((attachment) => (
+              <div
+                key={attachment.id}
+                className="group relative rounded-xl border border-border-subtle overflow-hidden bg-bg-card"
+              >
+                <img
+                  src={attachment.dataUrl}
+                  alt={attachment.name ?? "Attachment"}
+                  className="w-full h-auto object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const next = note.attachments?.filter((a) => a.id !== attachment.id);
+                    onUpdate({ attachments: next });
+                  }}
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 w-7 h-7 rounded-md bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-all backdrop-blur-sm"
+                  title="Remove attachment"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

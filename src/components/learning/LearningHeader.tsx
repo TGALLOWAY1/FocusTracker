@@ -1,13 +1,18 @@
-import { List, Map, PanelLeftClose, PanelLeftOpen, Settings } from "lucide-react";
+import { List, Map, PanelLeftClose, PanelLeftOpen, Settings, BookOpen } from "lucide-react";
 import type { ViewMode } from "../../state/learningStore";
+import type { LearningPath } from "../../data/learningPath";
+import { useLearningStore } from "../../state/learningStore";
 
 type Props = {
-  title: string;
-  subtitle: string;
+  path: LearningPath;
+  paths: LearningPath[];
+  onCreatePath: () => void;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
   overviewVisible: boolean;
   onToggleOverview: () => void;
+  outlineVisible: boolean;
+  onToggleOutline: () => void;
 };
 
 function ActivePathPill() {
@@ -52,13 +57,18 @@ function ViewToggle({
 }
 
 export function LearningHeader({
-  title,
-  subtitle,
+  path,
+  paths,
+  onCreatePath,
   viewMode,
   onViewModeChange,
   overviewVisible,
   onToggleOverview,
+  outlineVisible,
+  onToggleOutline,
 }: Props) {
+  const setActivePath = useLearningStore((s) => s.setActivePath);
+
   return (
     <div className="flex items-start justify-between gap-4 flex-wrap p-6 pb-4 border-b border-border-subtle">
       <div className="flex items-start gap-4 min-w-0">
@@ -67,12 +77,27 @@ export function LearningHeader({
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-[24px] leading-tight font-semibold tracking-tight text-text-primary">
-              {title}
-            </h1>
+            <select
+              value={path.id}
+              onChange={(e) => {
+                if (e.target.value === "new") {
+                  onCreatePath();
+                } else {
+                  setActivePath(e.target.value);
+                }
+              }}
+              className="text-[24px] leading-tight font-semibold tracking-tight text-text-primary bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60 rounded-md cursor-pointer"
+            >
+              {paths.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title}
+                </option>
+              ))}
+              <option value="new">+ Create new path</option>
+            </select>
             <ActivePathPill />
           </div>
-          <p className="mt-1 text-sm text-text-secondary">{subtitle}</p>
+          <p className="mt-1 text-sm text-text-secondary">{path.subtitle}</p>
         </div>
       </div>
 
@@ -80,16 +105,29 @@ export function LearningHeader({
         <ViewToggle viewMode={viewMode} onChange={onViewModeChange} />
         <button
           type="button"
-          onClick={onToggleOverview}
-          aria-pressed={!overviewVisible}
-          title={overviewVisible ? "Hide overview" : "Show overview"}
+          onClick={onToggleOutline}
+          aria-pressed={!outlineVisible}
+          title={outlineVisible ? "Hide outline" : "Show outline"}
           className="w-9 h-9 rounded-lg bg-bg-elevated flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors"
         >
-          {overviewVisible ? (
+          {outlineVisible ? (
             <PanelLeftClose size={16} />
           ) : (
             <PanelLeftOpen size={16} />
           )}
+        </button>
+        <button
+          type="button"
+          onClick={onToggleOverview}
+          aria-pressed={!overviewVisible}
+          title={overviewVisible ? "Hide overview" : "Show overview"}
+          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-colors ${
+            overviewVisible
+              ? "bg-brand-purpleSoft text-brand-purple hover:bg-brand-purple/20"
+              : "bg-bg-elevated text-text-secondary hover:text-text-primary"
+          }`}
+        >
+          <BookOpen size={16} />
         </button>
         <button
           type="button"
