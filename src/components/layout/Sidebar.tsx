@@ -2,6 +2,7 @@ import { ChevronRight, Flame, Target, Star } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { NAV_ITEMS } from "../../data/navItems";
 import { Card } from "../ui/Card";
+import { Eyebrow } from "../ui/Eyebrow";
 import { useFocusStore } from "../../state/focusStore";
 import { useWeeklyStats } from "../../state/useWeeklyStats";
 import { useStreaks } from "../../state/useStreaks";
@@ -119,9 +120,7 @@ function FocusTierCard() {
     <Card className="relative overflow-hidden">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-            Focus Tier
-          </div>
+          <Eyebrow>Focus Tier</Eyebrow>
           <div className="mt-1 flex items-baseline gap-2">
             <span className="text-2xl font-semibold text-brand-purple">
               {tier.label}
@@ -180,9 +179,7 @@ function StreakRow({ value, unit, label, iconBg, iconColor, Icon }: StreakRowPro
         <span className="text-lg font-semibold text-text-primary leading-none">
           {value}
         </span>
-        <span className="text-[11px] uppercase tracking-wider text-text-muted">
-          {unit}
-        </span>
+        <Eyebrow as="span">{unit}</Eyebrow>
       </div>
       <span className="ml-auto text-xs text-text-secondary truncate">{label}</span>
     </div>
@@ -196,9 +193,7 @@ function StreaksCard() {
 
   return (
     <Card>
-      <div className="text-[11px] uppercase tracking-wider text-text-muted font-medium mb-4">
-        Current Streaks
-      </div>
+      <Eyebrow className="mb-4">Current Streaks</Eyebrow>
       <div className="flex flex-col gap-3">
         <StreakRow
           value={String(focusStreakDays)}

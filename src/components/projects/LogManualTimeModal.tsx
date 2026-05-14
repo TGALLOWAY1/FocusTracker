@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Modal } from "../ui/Modal";
+import { Eyebrow } from "../ui/Eyebrow";
 import type { Project } from "../../data/projects";
 import { useProjectStore } from "../../state/projectStore";
 import { newId } from "../../utils/id";
@@ -43,9 +44,7 @@ export function LogManualTimeModal({ open, onClose, project }: Props) {
     >
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-            Minutes
-          </span>
+          <Eyebrow as="span">Minutes</Eyebrow>
           <input
             type="number"
             min={1}
@@ -63,9 +62,7 @@ export function LogManualTimeModal({ open, onClose, project }: Props) {
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-[11px] uppercase tracking-wider text-text-muted font-medium">
-            Note (optional)
-          </span>
+          <Eyebrow as="span">Note (optional)</Eyebrow>
           <input
             type="text"
             value={note}
