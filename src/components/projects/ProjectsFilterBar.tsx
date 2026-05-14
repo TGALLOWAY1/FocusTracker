@@ -29,7 +29,7 @@ export function ProjectsFilterBar({
       <div
         role="tablist"
         aria-label="Project status"
-        className="flex items-center gap-1 min-w-0 overflow-x-auto"
+        className="flex items-center gap-1 min-w-0 overflow-x-auto scrollbar-none"
       >
         {TABS.map((tab) => {
           const active = statusFilter === tab.key;

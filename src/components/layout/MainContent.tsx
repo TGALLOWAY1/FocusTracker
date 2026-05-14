@@ -14,7 +14,7 @@ function Greeting({ onPlan }: { onPlan: () => void }) {
         </div>
         <div className="min-w-0">
           <h1 className="text-[28px] leading-tight font-semibold tracking-tight text-text-primary">
-            Good morning, Alex.
+            Good morning, TJ.
           </h1>
           <p className="mt-1 text-sm text-text-secondary">
             One focused session can change your entire day.

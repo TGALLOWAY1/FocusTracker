@@ -14,6 +14,8 @@ import { CategoryDonutPanel } from "./CategoryDonutPanel";
 import { CategoryTrendPanel } from "./CategoryTrendPanel";
 import { QuickFiltersPanel } from "./QuickFiltersPanel";
 import { InsightsEmptyState } from "./InsightsEmptyState";
+import { useUIStore } from "../../state/uiStore";
+import { PanelRightClose } from "lucide-react";
 
 function Heading() {
   return (
@@ -50,6 +52,8 @@ function rangeLabel(range: InsightsFilters["dateRange"]): string {
 }
 
 export function InsightsPage() {
+  const rightSidebarOpen = useUIStore((s) => s.rightSidebarOpen);
+  const toggleRightSidebar = useUIStore((s) => s.toggleRightSidebar);
   const [filters, setFilters] = useState<InsightsFilters>({
     dateRange: "week",
     quickFilter: "all",
@@ -130,17 +134,26 @@ export function InsightsPage() {
         )}
       </main>
 
-      <aside className="hidden lg:flex flex-col gap-5 border-l border-border-subtle p-6 min-h-0 overflow-y-auto scrollbar-thin">
-        <CategoryDonutPanel
-          slices={data.byCategory}
-          totalMinutes={data.summary.totalMinutes}
-        />
-        <CategoryTrendPanel trend={data.trend} />
-        <QuickFiltersPanel
-          active={filters.quickFilter}
-          onChange={(quickFilter) => setFilters({ ...filters, quickFilter })}
-        />
-      </aside>
+      {rightSidebarOpen && (
+        <aside className="relative hidden lg:flex flex-col gap-5 border-l border-border-subtle p-6 min-h-0 overflow-y-auto scrollbar-thin">
+          <button
+            onClick={toggleRightSidebar}
+            className="absolute top-4 right-4 z-10 p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-elevated rounded-md transition-colors"
+            title="Collapse side panel"
+          >
+            <PanelRightClose size={16} />
+          </button>
+          <CategoryDonutPanel
+            slices={data.byCategory}
+            totalMinutes={data.summary.totalMinutes}
+          />
+          <CategoryTrendPanel trend={data.trend} />
+          <QuickFiltersPanel
+            active={filters.quickFilter}
+            onChange={(quickFilter) => setFilters({ ...filters, quickFilter })}
+          />
+        </aside>
+      )}
     </>
   );
 }

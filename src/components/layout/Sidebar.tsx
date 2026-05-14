@@ -1,4 +1,4 @@
-import { ChevronRight, Flame, Target, Star } from "lucide-react";
+import { ChevronRight, Flame, Target, Star, PanelLeftClose } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { NAV_ITEMS } from "../../data/navItems";
 import { Card } from "../ui/Card";
@@ -6,6 +6,7 @@ import { Eyebrow } from "../ui/Eyebrow";
 import { useFocusStore } from "../../state/focusStore";
 import { useWeeklyStats } from "../../state/useWeeklyStats";
 import { useStreaks } from "../../state/useStreaks";
+import { useUIStore } from "../../state/uiStore";
 import { FOCUS_TIERS, getTier } from "../../data/focusTiers";
 import { clamp } from "../../utils/time";
 
@@ -171,17 +172,23 @@ function StreakRow({ value, unit, label, iconBg, iconColor, Icon }: StreakRowPro
   return (
     <div className="flex items-center gap-3">
       <div
-        className={`w-9 h-9 rounded-xl flex items-center justify-center ${iconBg}`}
+        className={`w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center ${iconBg}`}
       >
         <Icon size={18} className={iconColor} />
       </div>
-      <div className="flex items-baseline gap-2 min-w-0">
-        <span className="text-lg font-semibold text-text-primary leading-none">
-          {value}
+      <div className="flex flex-col min-w-0">
+        <span className="text-[11px] text-text-muted uppercase tracking-wider font-medium truncate mb-0.5">
+          {label}
         </span>
-        <Eyebrow as="span">{unit}</Eyebrow>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-lg font-semibold text-text-primary leading-none">
+            {value}
+          </span>
+          <span className="text-[10px] uppercase tracking-wider font-medium text-text-muted">
+            {unit}
+          </span>
+        </div>
       </div>
-      <span className="ml-auto text-xs text-text-secondary truncate">{label}</span>
     </div>
   );
 }
@@ -228,10 +235,10 @@ function ProfileRow() {
   return (
     <div className="flex items-center gap-3 px-3 py-3 rounded-xl bg-bg-card border border-border-subtle">
       <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-purple to-accent-green flex items-center justify-center text-sm font-semibold text-bg-base">
-        A
+        T
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-sm font-medium text-text-primary truncate">Alex</div>
+        <div className="text-sm font-medium text-text-primary truncate">TJ</div>
         <div className="text-[11px] text-text-muted truncate">Keep climbing.</div>
       </div>
       <ChevronRight size={16} className="text-text-muted" />
@@ -242,8 +249,15 @@ function ProfileRow() {
 export function Sidebar() {
   return (
     <aside className="hidden lg:flex flex-col gap-4 border-r border-border-subtle bg-bg-base p-4 min-h-0">
-      <div className="pt-3">
+      <div className="pt-3 flex items-center justify-between">
         <FocusLadderLogo />
+        <button
+          onClick={useUIStore.getState().toggleLeftSidebar}
+          className="p-1.5 text-text-muted hover:text-text-primary hover:bg-bg-elevated rounded-md transition-colors"
+          title="Collapse sidebar"
+        >
+          <PanelLeftClose size={16} />
+        </button>
       </div>
       <NavList />
       <div className="mt-2 flex flex-col gap-4">
