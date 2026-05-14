@@ -70,15 +70,26 @@ export function ResourceList({ resources }: Props) {
           >
             {KIND_LABEL[resource.kind]}
           </span>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Coming soon"
-            className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary cursor-not-allowed opacity-80"
-          >
-            <ExternalLink size={14} />
-          </button>
+          {resource.url ? (
+            <a
+              href={resource.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors"
+              title={`Open ${resource.title}`}
+            >
+              <ExternalLink size={14} />
+            </a>
+          ) : (
+            <button
+              type="button"
+              disabled
+              title="No URL provided"
+              className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted cursor-not-allowed opacity-50"
+            >
+              <ExternalLink size={14} />
+            </button>
+          )}
         </li>
       ))}
     </ul>

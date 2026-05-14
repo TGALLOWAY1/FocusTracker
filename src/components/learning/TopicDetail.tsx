@@ -1,8 +1,11 @@
-import { MoreHorizontal, PanelLeftClose, Plus } from "lucide-react";
+import { useState } from "react";
+import { PanelLeftClose, Plus } from "lucide-react";
 import type { LearningSubtopic } from "../../data/learningPath";
 import { Eyebrow } from "../ui/Eyebrow";
 import { SubtopicCard } from "./SubtopicCard";
 import { ResourceList } from "./ResourceList";
+import { SubtopicFormModal } from "./SubtopicFormModal";
+import { ResourceFormModal } from "./ResourceFormModal";
 
 type Props = {
   topic: LearningSubtopic | null;
@@ -50,6 +53,9 @@ export function TopicDetail({
   const children = topic.children ?? [];
   const resources = topic.resources ?? [];
 
+  const [subtopicModalOpen, setSubtopicModalOpen] = useState(false);
+  const [resourceModalOpen, setResourceModalOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-5 max-w-3xl">
       <div className="flex items-start justify-between gap-3">
@@ -72,15 +78,6 @@ export function TopicDetail({
           >
             <PanelLeftClose size={16} />
           </button>
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Coming soon"
-            className="w-8 h-8 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary cursor-not-allowed opacity-80"
-          >
-            <MoreHorizontal size={16} />
-          </button>
         </div>
       </div>
 
@@ -90,46 +87,57 @@ export function TopicDetail({
         </p>
       )}
 
-      {children.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <Eyebrow className="px-1">Subtopics</Eyebrow>
-          {children.map((child) => (
-            <SubtopicCard
-              key={child.id}
-              subtopic={child}
-              selected={child.id === notesSubtopicId}
-              onClick={() => onSelectChild(child.id)}
-            />
-          ))}
-          <button
-            type="button"
-            disabled
-            aria-disabled="true"
-            title="Coming soon"
-            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl border border-dashed border-border-subtle text-text-muted text-sm cursor-not-allowed opacity-80 hover:opacity-100 transition-opacity"
-          >
-            <Plus size={14} />
-            <span>Add Subtopic</span>
-          </button>
-        </div>
-      )}
+      <div className="flex flex-col gap-2">
+        <Eyebrow className="px-1">Subtopics</Eyebrow>
+        {children.map((child) => (
+          <SubtopicCard
+            key={child.id}
+            subtopic={child}
+            selected={child.id === notesSubtopicId}
+            onClick={() => onSelectChild(child.id)}
+          />
+        ))}
+        {children.length === 0 && (
+          <div className="text-sm text-text-muted px-1 italic">No subtopics yet.</div>
+        )}
+        <button
+          type="button"
+          onClick={() => setSubtopicModalOpen(true)}
+          className="flex items-center justify-center gap-2 px-3 py-2.5 mt-1 rounded-xl border border-dashed border-border-subtle text-text-secondary text-sm hover:text-text-primary hover:bg-bg-elevated transition-colors"
+        >
+          <Plus size={14} />
+          <span>Add Subtopic</span>
+        </button>
+      </div>
 
-      {resources.length > 0 && (
-        <div className="flex flex-col gap-2 mt-2">
-          <div className="flex items-center justify-between px-1">
-            <Eyebrow>Resources</Eyebrow>
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              title="Coming soon"
-              className="text-xs text-text-secondary cursor-not-allowed opacity-80"
-            >
-              View all
-            </button>
-          </div>
-          <ResourceList resources={resources} />
+      <div className="flex flex-col gap-2 mt-2">
+        <div className="flex items-center justify-between px-1">
+          <Eyebrow>Resources</Eyebrow>
         </div>
+        <ResourceList resources={resources} />
+        <button
+          type="button"
+          onClick={() => setResourceModalOpen(true)}
+          className="flex items-center justify-center gap-2 px-3 py-2.5 mt-1 rounded-xl border border-dashed border-border-subtle text-text-secondary text-sm hover:text-text-primary hover:bg-bg-elevated transition-colors"
+        >
+          <Plus size={14} />
+          <span>Add Resource</span>
+        </button>
+      </div>
+
+      {subtopicModalOpen && (
+        <SubtopicFormModal
+          open={subtopicModalOpen}
+          onClose={() => setSubtopicModalOpen(false)}
+          parentId={topic.id}
+        />
+      )}
+      {resourceModalOpen && (
+        <ResourceFormModal
+          open={resourceModalOpen}
+          onClose={() => setResourceModalOpen(false)}
+          subtopicId={topic.id}
+        />
       )}
     </div>
   );

@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Plus, Search } from "lucide-react";
 import type { LearningModule } from "../../data/learningPath";
 import { ModuleRow } from "./ModuleRow";
+import { ModuleFormModal } from "./ModuleFormModal";
 
 type Props = {
   modules: LearningModule[];
@@ -25,6 +27,8 @@ export function ModuleOutline({
     modules.length > 0 &&
     modules.every((m) => expandedModuleIds.includes(m.id));
 
+  const [formOpen, setFormOpen] = useState(false);
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between gap-2 px-1">
@@ -39,10 +43,9 @@ export function ModuleOutline({
         <div className="flex items-center gap-1">
           <button
             type="button"
-            disabled
-            aria-disabled="true"
-            title="Coming soon"
-            className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary cursor-not-allowed opacity-70"
+            onClick={() => setFormOpen(true)}
+            title="Add Custom Module"
+            className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary transition-colors"
           >
             <Plus size={14} />
           </button>
@@ -73,14 +76,16 @@ export function ModuleOutline({
 
       <button
         type="button"
-        disabled
-        aria-disabled="true"
-        title="Coming soon"
-        className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-border-subtle text-text-muted text-sm cursor-not-allowed opacity-80 hover:opacity-100 transition-opacity"
+        onClick={() => setFormOpen(true)}
+        className="mt-2 flex items-center gap-2 px-3 py-2.5 rounded-lg border border-dashed border-border-subtle text-text-secondary text-sm hover:text-text-primary hover:bg-bg-elevated transition-colors"
       >
         <Plus size={14} />
         <span>Add Custom Module</span>
       </button>
+
+      {formOpen && (
+        <ModuleFormModal open={formOpen} onClose={() => setFormOpen(false)} />
+      )}
     </div>
   );
 }

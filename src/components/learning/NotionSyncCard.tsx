@@ -1,4 +1,7 @@
-import { ExternalLink, MoreHorizontal } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, MoreHorizontal, Link2 } from "lucide-react";
+import { useLearningStore } from "../../state/learningStore";
+import { NotionSyncModal } from "./NotionSyncModal";
 
 function NotionMark() {
   return (
@@ -29,38 +32,79 @@ function NotionMark() {
 }
 
 export function NotionSyncCard() {
+  const paths = useLearningStore((s) => s.paths);
+  const activePathId = useLearningStore((s) => s.activePathId);
+  const path = paths.find((p) => p.id === activePathId);
+  
+  const [modalOpen, setModalOpen] = useState(false);
+
+  if (!path) return null;
+
+  const { notionUrl, lastSyncedAt } = path;
+
+  // Simple relative time formatting
+  const getRelativeTime = (timestamp?: number) => {
+    if (!timestamp) return "Never synced";
+    const diff = Math.floor((Date.now() - timestamp) / 60000); // minutes
+    if (diff < 1) return "Just now";
+    if (diff < 60) return `${diff}m ago`;
+    const hours = Math.floor(diff / 60);
+    if (hours < 24) return `${hours}h ago`;
+    return `${Math.floor(hours / 24)}d ago`;
+  };
+
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-bg-card border border-border-subtle px-3 py-2.5">
-      <span className="w-9 h-9 rounded-xl bg-bg-elevated flex items-center justify-center shrink-0">
-        <NotionMark />
-      </span>
-      <div className="flex-1 min-w-0">
-        <div className="text-sm text-text-primary font-medium leading-tight">
-          Synced with Notion
+    <>
+      <div className="flex items-center gap-3 rounded-xl bg-bg-card border border-border-subtle px-3 py-2.5">
+        <span className="w-9 h-9 rounded-xl bg-bg-elevated flex items-center justify-center shrink-0">
+          <NotionMark />
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm text-text-primary font-medium leading-tight">
+            {notionUrl ? "Synced with Notion" : "Notion Sync"}
+          </div>
+          <div className="text-[11px] text-text-muted mt-0.5">
+            {notionUrl ? `Last synced ${getRelativeTime(lastSyncedAt)}` : "Link a Notion page"}
+          </div>
         </div>
-        <div className="text-[11px] text-text-muted mt-0.5">
-          Last synced 2m ago
-        </div>
+        
+        {notionUrl ? (
+          <a
+            href={notionUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-bg-elevated text-xs text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <span>Open in Notion</span>
+            <ExternalLink size={12} />
+          </a>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setModalOpen(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-bg-elevated text-xs text-text-secondary hover:text-text-primary transition-colors"
+          >
+            <span>Link Page</span>
+            <Link2 size={12} />
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => setModalOpen(true)}
+          className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted hover:text-text-primary hover:bg-bg-elevated transition-colors"
+        >
+          <MoreHorizontal size={14} />
+        </button>
       </div>
-      <button
-        type="button"
-        disabled
-        aria-disabled="true"
-        title="Coming soon"
-        className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-bg-elevated text-xs text-text-secondary cursor-not-allowed opacity-80"
-      >
-        <span>Open in Notion</span>
-        <ExternalLink size={12} />
-      </button>
-      <button
-        type="button"
-        disabled
-        aria-disabled="true"
-        title="Coming soon"
-        className="w-7 h-7 rounded-md flex items-center justify-center text-text-muted cursor-not-allowed opacity-80"
-      >
-        <MoreHorizontal size={14} />
-      </button>
-    </div>
+
+      {modalOpen && (
+        <NotionSyncModal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          currentUrl={notionUrl}
+        />
+      )}
+    </>
   );
 }
