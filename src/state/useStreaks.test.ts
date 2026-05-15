@@ -19,6 +19,7 @@ function makeSession(
     activityCategory: "other",
     sessionType: "deep",
     tags: [],
+    taskRecords: [],
   };
   return { session, reflection: null };
 }

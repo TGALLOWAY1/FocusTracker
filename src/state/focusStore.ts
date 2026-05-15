@@ -19,7 +19,13 @@ type Flags = {
   distractionsBlocked: boolean;
 };
 
-export type Todo = { id: string; text: string; done: boolean };
+export type Todo = {
+  id: string;
+  text: string;
+  done: boolean;
+  /** Wall-clock ms when the todo was checked off; null while unchecked. */
+  completedAt: number | null;
+};
 
 export type DailyPlan = {
   projectId: string;
@@ -31,6 +37,17 @@ export type DailyPlan = {
 };
 
 export type SessionType = "deep" | "light" | "learning";
+
+// A per-todo record snapshotted into a completed session. `durationSec` is
+// derived from checkoff timestamps at completion but is user-editable
+// afterward (null = blank); `tag` is applied by the user after the fact.
+export type TaskRecord = {
+  id: string;
+  text: string;
+  completedAt: number | null;
+  durationSec: number | null;
+  tag: string | null;
+};
 
 export type CompletedSession = {
   id: string;
@@ -51,6 +68,7 @@ export type CompletedSession = {
   activityCategory: ActivityCategory;
   sessionType: SessionType;
   tags: string[];
+  taskRecords: TaskRecord[];
 };
 
 export type SessionReflection = {
@@ -79,6 +97,12 @@ type FocusState = {
   todos: Todo[];
   durationSec: number;
   remainingSec: number;
+  /**
+   * Wall-clock ms when the running session started — the anchor for the
+   * first todo's tracked duration. Transient: never persisted, so a
+   * mid-session refresh (which can't resume anyway) leaves it null.
+   */
+  startedAt: number | null;
   nextBreak: { label: string; minutes: number };
   flags: Flags;
   currentTierId: number;
@@ -101,6 +125,11 @@ type FocusActions = {
   setDailyPlan: (plan: DailyPlan) => void;
   clearDailyPlan: () => void;
   toggleTodo: (todoId: string) => void;
+  updateTaskRecord: (
+    sessionId: string,
+    taskId: string,
+    patch: { durationSec?: number | null; tag?: string | null }
+  ) => void;
   submitReflection: (reflection: SessionReflection) => void;
   dismissReflection: () => void;
   deleteSession: (sessionId: string) => void;
@@ -154,6 +183,35 @@ function buildTags(opts: {
   return tags;
 }
 
+// Snapshots the session's todos into TaskRecords. Each checked-off todo's
+// duration is the wall-clock gap from the previous checkoff (the first
+// anchored to the session start). Durations therefore reflect checkoff
+// ORDER, not list order, and include any paused time — both acceptable
+// because the values are user-editable in the Insights history afterward.
+// Un-checked todos carry a null duration (blank) for the user to fill in.
+function buildTaskRecords(
+  todos: Todo[],
+  sessionStartedAt: number
+): TaskRecord[] {
+  const checked = todos
+    .filter((t) => t.completedAt != null)
+    .sort((a, b) => (a.completedAt as number) - (b.completedAt as number));
+  const durationById = new Map<string, number>();
+  let prev = sessionStartedAt;
+  for (const t of checked) {
+    const at = t.completedAt as number;
+    durationById.set(t.id, Math.max(0, Math.round((at - prev) / 1000)));
+    prev = at;
+  }
+  return todos.map((t) => ({
+    id: t.id,
+    text: t.text,
+    completedAt: t.completedAt ?? null,
+    durationSec: durationById.get(t.id) ?? null,
+    tag: null,
+  }));
+}
+
 function buildCompletion(
   state: FocusState,
   completedNaturally: boolean
@@ -187,6 +245,7 @@ function buildCompletion(
     activityCategory: category,
     sessionType,
     tags,
+    taskRecords: buildTaskRecords(state.todos, state.startedAt ?? startedAt),
   };
 }
 
@@ -245,6 +304,17 @@ export function getTotalXp(state: FocusState): number {
   return total;
 }
 
+// Migration helper: backfills `completedAt` onto a legacy persisted todo
+// (pre-v5 todos lacked the field).
+function withCompletedAt(todo: unknown): unknown {
+  if (!todo || typeof todo !== "object") return todo;
+  const t = todo as Record<string, unknown>;
+  return {
+    ...t,
+    completedAt: typeof t.completedAt === "number" ? t.completedAt : null,
+  };
+}
+
 type PersistedFocus = Pick<
   FocusState,
   | "projectId"
@@ -293,6 +363,7 @@ export const useFocusStore = create<FocusStore>()(
       todos: [],
       durationSec: DEFAULT_DURATION_SEC,
       remainingSec: DEFAULT_DURATION_SEC,
+      startedAt: null,
       nextBreak: { label: "Short Break", minutes: 5 },
       flags: {
         focusMode: true,
@@ -306,7 +377,11 @@ export const useFocusStore = create<FocusStore>()(
       sessionLog: [],
 
       start: () =>
-        set((s) => ({ status: "running", remainingSec: s.durationSec })),
+        set((s) => ({
+          status: "running",
+          remainingSec: s.durationSec,
+          startedAt: Date.now(),
+        })),
       pause: () => set({ status: "paused" }),
       resume: () => set({ status: "running" }),
 
@@ -339,16 +414,17 @@ export const useFocusStore = create<FocusStore>()(
       setDailyPlan: (plan) =>
         set((s) => {
           const newDurationSec = plan.plannedDurationMin * 60;
+          const active = s.status === "running" || s.status === "paused";
           return {
             dailyPlan: plan,
             projectId: plan.projectId,
             task: plan.primaryTask,
             todos: plan.todos,
             durationSec: newDurationSec,
-            remainingSec:
-              s.status === "running" || s.status === "paused"
-                ? s.remainingSec
-                : newDurationSec,
+            remainingSec: active ? s.remainingSec : newDurationSec,
+            // Re-planning mid-session swaps in fresh todos — re-anchor their
+            // timing baseline so the first one isn't credited stale time.
+            startedAt: active ? Date.now() : s.startedAt,
           };
         }),
       clearDailyPlan: () => set({ dailyPlan: null }),
@@ -356,7 +432,30 @@ export const useFocusStore = create<FocusStore>()(
       toggleTodo: (todoId) =>
         set((s) => ({
           todos: s.todos.map((t) =>
-            t.id === todoId ? { ...t, done: !t.done } : t
+            t.id === todoId
+              ? {
+                  ...t,
+                  done: !t.done,
+                  completedAt: t.done ? null : Date.now(),
+                }
+              : t
+          ),
+        })),
+
+      updateTaskRecord: (sessionId, taskId, patch) =>
+        set((s) => ({
+          sessionLog: s.sessionLog.map((entry) =>
+            entry.session.id === sessionId
+              ? {
+                  ...entry,
+                  session: {
+                    ...entry.session,
+                    taskRecords: entry.session.taskRecords.map((tr) =>
+                      tr.id === taskId ? { ...tr, ...patch } : tr
+                    ),
+                  },
+                }
+              : entry
           ),
         })),
 
@@ -415,7 +514,7 @@ export const useFocusStore = create<FocusStore>()(
     }),
     {
       name: "focus-ladder.focus",
-      version: 4,
+      version: 5,
       storage: createJSONStorage(() => localStorage),
       partialize: (state): PersistedFocus => ({
         projectId: state.projectId,
@@ -434,6 +533,8 @@ export const useFocusStore = create<FocusStore>()(
       // from projectStore via useFocusProjectName) and renamed each
       // sessionLog entry's `session.project` to `session.projectName`
       // to make its snapshot-not-key semantics explicit.
+      // v4 -> v5 added per-task timing: `taskRecords` on each completed
+      // session and `completedAt` on every Todo.
       migrate: (persistedState, version) => {
         if (!persistedState || typeof persistedState !== "object") {
           return persistedState;
@@ -470,6 +571,34 @@ export const useFocusStore = create<FocusStore>()(
                 },
               };
             });
+          }
+        }
+        if (version < 5) {
+          const log = next.sessionLog;
+          if (Array.isArray(log)) {
+            next.sessionLog = log.map((entry) => {
+              if (!entry || typeof entry !== "object") return entry;
+              const e = entry as { session?: Record<string, unknown> };
+              if (!e.session || typeof e.session !== "object") return entry;
+              return {
+                ...entry,
+                session: {
+                  ...e.session,
+                  taskRecords: Array.isArray(e.session.taskRecords)
+                    ? e.session.taskRecords
+                    : [],
+                },
+              };
+            });
+          }
+          if (Array.isArray(next.todos)) {
+            next.todos = next.todos.map(withCompletedAt);
+          }
+          if (next.dailyPlan && typeof next.dailyPlan === "object") {
+            const dp = next.dailyPlan as Record<string, unknown>;
+            if (Array.isArray(dp.todos)) {
+              next.dailyPlan = { ...dp, todos: dp.todos.map(withCompletedAt) };
+            }
           }
         }
         return next;

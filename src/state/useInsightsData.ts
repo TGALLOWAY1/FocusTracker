@@ -26,6 +26,15 @@ export type CategorySlice = {
   percent: number;
 };
 
+export type TaskTagSlice = {
+  /** A user-applied tag, or "Untagged" for tasks with no tag. */
+  tag: string;
+  minutes: number;
+  taskCount: number;
+  /** 0..1, share of total tagged task time. */
+  percent: number;
+};
+
 export type CategoryTrendPoint = {
   /** "Mon", "Tue", … for week range; "M 12", "M 13", … for month range. */
   label: string;
@@ -61,9 +70,13 @@ export type InsightsData = {
   sessions: LoggedSession[];
   byCategory: CategorySlice[];
   trend: CategoryTrend;
+  /** Time spent per task tag, across the filtered sessions. */
+  taskBreakdown: TaskTagSlice[];
   /** True when the underlying log is empty (regardless of filters). */
   logEmpty: boolean;
 };
+
+const UNTAGGED_LABEL = "Untagged";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
@@ -163,6 +176,36 @@ function computeByCategory(sessions: LoggedSession[]): CategorySlice[] {
       },
     ];
   });
+  slices.sort((a, b) => b.minutes - a.minutes);
+  return slices;
+}
+
+// Aggregates per-task time by tag across the given sessions. Only tasks
+// with a concrete `durationSec` count — blank durations are excluded.
+export function computeTaskBreakdown(
+  sessions: LoggedSession[]
+): TaskTagSlice[] {
+  const secByTag = new Map<string, number>();
+  const countByTag = new Map<string, number>();
+  let totalSec = 0;
+  for (const { session } of sessions) {
+    for (const record of session.taskRecords) {
+      if (record.durationSec == null) continue;
+      const key = record.tag ?? UNTAGGED_LABEL;
+      secByTag.set(key, (secByTag.get(key) ?? 0) + record.durationSec);
+      countByTag.set(key, (countByTag.get(key) ?? 0) + 1);
+      totalSec += record.durationSec;
+    }
+  }
+  const slices: TaskTagSlice[] = [];
+  for (const [tag, sec] of secByTag) {
+    slices.push({
+      tag,
+      minutes: Math.round(sec / 60),
+      taskCount: countByTag.get(tag) ?? 0,
+      percent: totalSec === 0 ? 0 : sec / totalSec,
+    });
+  }
   slices.sort((a, b) => b.minutes - a.minutes);
   return slices;
 }
@@ -279,6 +322,7 @@ export function computeInsights(
     sessions,
     byCategory: computeByCategory(sessions),
     trend: computeTrend(sessions, filters.dateRange, now),
+    taskBreakdown: computeTaskBreakdown(sessions),
     logEmpty: log.length === 0,
   };
 }

@@ -305,9 +305,19 @@ function ActiveState() {
                       <Circle size={18} className="text-white/40" />
                     )}
                   </div>
-                  <span className={`text-sm ${todo.done ? "line-through decoration-white/30" : ""}`}>
+                  <span
+                    className={`flex-1 text-sm ${todo.done ? "line-through decoration-white/30" : ""}`}
+                  >
                     {todo.text}
                   </span>
+                  {todo.done && todo.completedAt != null && (
+                    <span className="shrink-0 mt-0.5 text-[11px] tabular-nums text-white/45">
+                      {new Date(todo.completedAt).toLocaleTimeString([], {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>

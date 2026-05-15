@@ -20,6 +20,7 @@ function makeSession(
     activityCategory: "other",
     sessionType: "light",
     tags: [],
+    taskRecords: [],
   };
   return { session, reflection: null };
 }
