@@ -23,23 +23,27 @@ function BottomItem({ item }: { item: BottomItem }) {
 
   const classFor = (active: boolean) =>
     [
-      "flex items-center gap-2 px-3 py-2 rounded-xl select-none transition-colors",
+      "flex items-center gap-2 px-2.5 sm:px-3 py-2 rounded-xl select-none transition-colors min-h-[44px]",
       active
         ? "text-brand-purple"
         : "text-text-secondary hover:text-text-primary",
     ].join(" ");
 
   return (
-    <NavLink to={item.path} className={({ isActive }) => classFor(isActive)}>
+    <NavLink
+      to={item.path}
+      className={({ isActive }) => classFor(isActive)}
+      aria-label={item.label}
+    >
       <Icon size={18} strokeWidth={2} />
-      <span className="text-sm font-medium">{item.label}</span>
+      <span className="hidden sm:inline text-sm font-medium">{item.label}</span>
     </NavLink>
   );
 }
 
 export function BottomBar() {
   return (
-    <footer className="h-[72px] border-t border-border-subtle bg-bg-base/95 backdrop-blur px-6 flex items-center gap-2 relative">
+    <footer className="h-[72px] border-t border-border-subtle bg-bg-base/95 backdrop-blur px-3 sm:px-6 pb-[env(safe-area-inset-bottom)] flex items-center gap-2 relative">
       <div className="flex items-center gap-1">
         {ITEMS.map((item) => (
           <BottomItem key={item.id} item={item} />

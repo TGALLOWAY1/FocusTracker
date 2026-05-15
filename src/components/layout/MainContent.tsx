@@ -38,7 +38,7 @@ export function MainContent() {
   const [planOpen, setPlanOpen] = useState(false);
 
   return (
-    <main className="flex flex-col p-6 min-w-0 overflow-y-auto scrollbar-thin">
+    <main className="flex flex-col p-4 lg:p-6 min-w-0 overflow-y-auto scrollbar-thin">
       <Greeting onPlan={() => setPlanOpen(true)} />
       <div className="mt-5">
         <FocusSessionCard />

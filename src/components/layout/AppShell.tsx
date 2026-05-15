@@ -29,7 +29,7 @@ export function AppShell() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-base text-text-primary flex flex-col relative">
+    <div className="min-h-dvh bg-bg-base text-text-primary flex flex-col relative">
       {!leftSidebarOpen && (
         <button
           onClick={toggleLeftSidebar}
