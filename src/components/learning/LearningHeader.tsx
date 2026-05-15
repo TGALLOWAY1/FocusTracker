@@ -1,4 +1,4 @@
-import { List, Map, PanelLeftClose, PanelLeftOpen, Settings, BookOpen } from "lucide-react";
+import { List, Map, PanelLeftClose, PanelLeftOpen, Settings, BookOpen, ChevronDown } from "lucide-react";
 import type { ViewMode } from "../../state/learningStore";
 import type { LearningPath } from "../../data/learningPath";
 import { useLearningStore } from "../../state/learningStore";
@@ -77,24 +77,27 @@ export function LearningHeader({
         </div>
         <div className="min-w-0">
           <div className="flex items-center gap-3 flex-wrap">
-            <select
-              value={path.id}
-              onChange={(e) => {
-                if (e.target.value === "new") {
-                  onCreatePath();
-                } else {
-                  setActivePath(e.target.value);
-                }
-              }}
-              className="text-[24px] leading-tight font-semibold tracking-tight text-text-primary bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60 rounded-md cursor-pointer"
-            >
-              {paths.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.title}
-                </option>
-              ))}
-              <option value="new">+ Create new path</option>
-            </select>
+            <div className="relative flex items-center">
+              <select
+                value={path.id}
+                onChange={(e) => {
+                  if (e.target.value === "new") {
+                    onCreatePath();
+                  } else {
+                    setActivePath(e.target.value);
+                  }
+                }}
+                className="appearance-none pr-8 text-[24px] leading-tight font-semibold tracking-tight text-text-primary bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60 rounded-md cursor-pointer"
+              >
+                {paths.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-bg-card text-base">
+                    {p.title}
+                  </option>
+                ))}
+                <option value="new" className="bg-bg-card text-base">+ Create new path</option>
+              </select>
+              <ChevronDown size={20} className="absolute right-2 text-text-muted pointer-events-none" />
+            </div>
             <ActivePathPill />
           </div>
           <p className="mt-1 text-sm text-text-secondary">{path.subtitle}</p>

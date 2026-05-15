@@ -19,11 +19,13 @@ type Flags = {
   distractionsBlocked: boolean;
 };
 
+export type Todo = { id: string; text: string; done: boolean };
+
 export type DailyPlan = {
   projectId: string;
   projectName: string;
   primaryTask: string;
-  secondaryTask?: string;
+  todos: Todo[];
   plannedDurationMin: number;
   createdAt: number;
 };
@@ -74,6 +76,7 @@ type FocusState = {
   status: SessionStatus;
   projectId: string;
   task: string;
+  todos: Todo[];
   durationSec: number;
   remainingSec: number;
   nextBreak: { label: string; minutes: number };
@@ -97,6 +100,7 @@ type FocusActions = {
   setXp: (xp: number) => void;
   setDailyPlan: (plan: DailyPlan) => void;
   clearDailyPlan: () => void;
+  toggleTodo: (todoId: string) => void;
   submitReflection: (reflection: SessionReflection) => void;
   dismissReflection: () => void;
   deleteSession: (sessionId: string) => void;
@@ -154,8 +158,12 @@ function buildCompletion(
   state: FocusState,
   completedNaturally: boolean
 ): CompletedSession {
-  const elapsed = Math.max(0, state.durationSec - state.remainingSec);
-  const actualDurationSec = completedNaturally ? state.durationSec : elapsed;
+  const openEnded = state.durationSec === 0;
+  const actualDurationSec = completedNaturally
+    ? state.durationSec
+    : openEnded
+      ? state.remainingSec
+      : Math.max(0, state.durationSec - state.remainingSec);
   const endedAt = Date.now();
   const startedAt = endedAt - actualDurationSec * 1000;
   const category = lookupActivityCategory(state.projectId);
@@ -241,6 +249,7 @@ type PersistedFocus = Pick<
   FocusState,
   | "projectId"
   | "task"
+  | "todos"
   | "durationSec"
   | "flags"
   | "currentTierId"
@@ -281,6 +290,7 @@ export const useFocusStore = create<FocusStore>()(
       // that `projectId: "harmonia-ep"` didn't resolve to any seed.
       projectId: "lofi-beats-collection",
       task: "Mixing and arrangement",
+      todos: [],
       durationSec: DEFAULT_DURATION_SEC,
       remainingSec: DEFAULT_DURATION_SEC,
       nextBreak: { label: "Short Break", minutes: 5 },
@@ -300,13 +310,20 @@ export const useFocusStore = create<FocusStore>()(
       pause: () => set({ status: "paused" }),
       resume: () => set({ status: "running" }),
 
-      end: () => set((s) => applyCompletion(s, false)),
+      end: () =>
+        set((s) => {
+          if (s.status !== "running") return s;
+          return applyCompletion(s, false);
+        }),
 
       tick: () =>
         set((s) => {
           if (s.status !== "running") return s;
-          if (s.remainingSec <= 1) {
+          if (s.durationSec > 0 && s.remainingSec <= 1) {
             return applyCompletion(s, true);
+          }
+          if (s.durationSec === 0) {
+            return { remainingSec: s.remainingSec + 1 };
           }
           return { remainingSec: s.remainingSec - 1 };
         }),
@@ -326,6 +343,7 @@ export const useFocusStore = create<FocusStore>()(
             dailyPlan: plan,
             projectId: plan.projectId,
             task: plan.primaryTask,
+            todos: plan.todos,
             durationSec: newDurationSec,
             remainingSec:
               s.status === "running" || s.status === "paused"
@@ -334,6 +352,13 @@ export const useFocusStore = create<FocusStore>()(
           };
         }),
       clearDailyPlan: () => set({ dailyPlan: null }),
+
+      toggleTodo: (todoId) =>
+        set((s) => ({
+          todos: s.todos.map((t) =>
+            t.id === todoId ? { ...t, done: !t.done } : t
+          ),
+        })),
 
       // The session was already appended to `sessionLog` (with
       // `reflection: null`) and XP was already awarded at completion.
@@ -395,6 +420,7 @@ export const useFocusStore = create<FocusStore>()(
       partialize: (state): PersistedFocus => ({
         projectId: state.projectId,
         task: state.task,
+        todos: state.todos,
         durationSec: state.durationSec,
         flags: state.flags,
         currentTierId: state.currentTierId,

@@ -7,6 +7,8 @@ import {
   Smartphone,
   BellOff,
   Ban,
+  CheckCircle2,
+  Circle,
   type LucideIcon,
 } from "lucide-react";
 import { useFocusStore, type SessionStatus } from "../../state/focusStore";
@@ -100,8 +102,9 @@ function CircularTimer({ remainingSec, totalSec, status }: CircularTimerProps) {
   const stroke = 5;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const elapsed = totalSec - remainingSec;
-  const dashOffset = circumference * (elapsed / Math.max(1, totalSec));
+  const isOpenEnded = totalSec === 0;
+  const elapsed = isOpenEnded ? remainingSec : totalSec - remainingSec;
+  const dashOffset = isOpenEnded ? 0 : circumference * (elapsed / Math.max(1, totalSec));
 
   const ringColor = status === "paused" ? "#F5C76E" : "#5FD68A";
   const labelColor = status === "paused" ? "text-accent-yellow" : "text-accent-green";
@@ -132,7 +135,7 @@ function CircularTimer({ remainingSec, totalSec, status }: CircularTimerProps) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <div className="text-[68px] leading-none font-semibold tracking-tight text-white tabular-nums drop-shadow-[0_2px_12px_rgba(0,0,0,0.35)]">
-          {formatMMSS(remainingSec)}
+          {formatMMSS(isOpenEnded ? elapsed : remainingSec)}
         </div>
         <div
           className={`mt-3 inline-flex items-center gap-1.5 text-sm font-medium ${labelColor}`}
@@ -228,6 +231,8 @@ function ActiveState() {
   const status = useFocusStore((s) => s.status);
   const project = useFocusProjectName();
   const task = useFocusStore((s) => s.task);
+  const todos = useFocusStore((s) => s.todos);
+  const toggleTodo = useFocusStore((s) => s.toggleTodo);
   const remainingSec = useFocusStore((s) => s.remainingSec);
   const durationSec = useFocusStore((s) => s.durationSec);
   const nextBreak = useFocusStore((s) => s.nextBreak);
@@ -278,8 +283,39 @@ function ActiveState() {
           />
         </div>
 
+        {/* todos */}
+        {todos && todos.length > 0 && (
+          <div className="mt-8 flex flex-col items-center">
+            <div className="w-full max-w-sm flex flex-col gap-2">
+              {todos.map((todo) => (
+                <button
+                  key={todo.id}
+                  type="button"
+                  onClick={() => toggleTodo(todo.id)}
+                  className={`flex items-start gap-3 px-4 py-3 rounded-xl border transition-colors text-left ${
+                    todo.done
+                      ? "bg-white/5 border-white/10 text-white/50"
+                      : "bg-white/10 border-white/20 text-white hover:bg-white/15"
+                  }`}
+                >
+                  <div className="shrink-0 mt-0.5">
+                    {todo.done ? (
+                      <CheckCircle2 size={18} className="text-accent-green" />
+                    ) : (
+                      <Circle size={18} className="text-white/40" />
+                    )}
+                  </div>
+                  <span className={`text-sm ${todo.done ? "line-through decoration-white/30" : ""}`}>
+                    {todo.text}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* pause / resume */}
-        <div className="mt-6 flex flex-col items-center gap-3">
+        <div className="mt-8 flex flex-col items-center gap-3">
           <button
             type="button"
             onClick={paused ? resume : pause}

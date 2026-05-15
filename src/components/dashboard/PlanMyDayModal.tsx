@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState } from "react";
-import { Sparkles } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { Eyebrow } from "../ui/Eyebrow";
-import { useFocusStore } from "../../state/focusStore";
+import { useFocusStore, type Todo } from "../../state/focusStore";
 import { useProjectStore } from "../../state/projectStore";
 import {
   PROJECT_ICONS,
   projectColorClasses,
   type Project,
 } from "../../data/projects";
-import { FOCUS_TIERS } from "../../data/focusTiers";
+
+import { newId } from "../../utils/id";
 
 type PlanMyDayModalProps = {
   open: boolean;
   onClose: () => void;
 };
 
-const DURATION_OPTIONS = FOCUS_TIERS.map((t) => t.minutes);
+const DURATION_OPTIONS = [0, 15, 30, 45, 60, 90, 120];
 
 function FieldLabel({
   children,
@@ -72,6 +73,7 @@ function ProjectPill({
 export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
   const storeProjectId = useFocusStore((s) => s.projectId);
   const storeTask = useFocusStore((s) => s.task);
+  const storeTodos = useFocusStore((s) => s.todos);
   const storeDuration = useFocusStore((s) => s.durationSec);
   const setDailyPlan = useFocusStore((s) => s.setDailyPlan);
   const projects = useProjectStore((s) => s.projects);
@@ -84,7 +86,8 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
 
   const [projectId, setProjectId] = useState<string>(defaultProjectId);
   const [primary, setPrimary] = useState<string>(storeTask);
-  const [secondary, setSecondary] = useState<string>("");
+  const [todos, setTodos] = useState<Todo[]>(storeTodos);
+  const [newTodo, setNewTodo] = useState("");
   const [durationMin, setDurationMin] = useState<number>(defaultDurationMin);
   const primaryInputRef = useRef<HTMLInputElement>(null);
 
@@ -92,7 +95,8 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
     if (!open) return;
     setProjectId(defaultProjectId);
     setPrimary(storeTask);
-    setSecondary("");
+    setTodos(storeTodos);
+    setNewTodo("");
     setDurationMin(defaultDurationMin);
     requestAnimationFrame(() => primaryInputRef.current?.focus());
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -107,7 +111,7 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
       projectId: selectedProject.id,
       projectName: selectedProject.name,
       primaryTask: primary.trim(),
-      secondaryTask: secondary.trim() || undefined,
+      todos,
       plannedDurationMin: durationMin,
       createdAt: Date.now(),
     });
@@ -125,7 +129,7 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
       <div className="flex flex-col gap-5">
         <div>
           <FieldLabel>Project</FieldLabel>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto scrollbar-thin pr-1">
             {projects.map((p) => (
               <ProjectPill
                 key={p.id}
@@ -155,13 +159,49 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
         </div>
 
         <div>
-          <FieldLabel optional>Secondary task</FieldLabel>
-          <input
-            value={secondary}
-            onChange={(e) => setSecondary(e.target.value)}
-            placeholder="If time permits..."
-            className="w-full bg-bg-elevated border border-border-subtle rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none focus:border-brand-purple/50 transition-colors"
-          />
+          <FieldLabel optional>To-do list</FieldLabel>
+          <div className="flex flex-col gap-2">
+            {todos.map((todo) => (
+              <div key={todo.id} className="flex items-center gap-2 px-3 py-2 bg-bg-elevated border border-border-subtle rounded-xl text-sm text-text-primary">
+                <span className="flex-1">{todo.text}</span>
+                <button
+                  type="button"
+                  onClick={() => setTodos(todos.filter((t) => t.id !== todo.id))}
+                  className="text-text-muted hover:text-accent-red"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+            <div className="flex items-center gap-2">
+              <input
+                value={newTodo}
+                onChange={(e) => setNewTodo(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newTodo.trim()) {
+                    e.preventDefault();
+                    setTodos([...todos, { id: newId("todo"), text: newTodo.trim(), done: false }]);
+                    setNewTodo("");
+                  }
+                }}
+                placeholder="Add a to-do item..."
+                className="flex-1 bg-bg-elevated border border-border-subtle rounded-xl px-3 py-2.5 text-sm text-text-primary placeholder-text-muted outline-none focus:border-brand-purple/50 transition-colors"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newTodo.trim()) {
+                    setTodos([...todos, { id: newId("todo"), text: newTodo.trim(), done: false }]);
+                    setNewTodo("");
+                  }
+                }}
+                disabled={!newTodo.trim()}
+                className="px-3 py-2.5 rounded-xl bg-bg-elevated border border-border-subtle text-sm font-medium text-text-secondary hover:text-text-primary hover:border-brand-purple/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Add
+              </button>
+            </div>
+          </div>
         </div>
 
         <div>
@@ -181,7 +221,7 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
                       : "bg-bg-elevated text-text-secondary border-border-subtle hover:text-text-primary",
                   ].join(" ")}
                 >
-                  {min} min
+                  {min === 0 ? "Open-ended" : `${min} min`}
                 </button>
               );
             })}

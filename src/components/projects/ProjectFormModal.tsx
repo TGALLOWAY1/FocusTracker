@@ -1,5 +1,5 @@
 import { useMemo, useState, type ChangeEvent } from "react";
-import { ImagePlus, Palette, X } from "lucide-react";
+import { ImagePlus, Palette, X, ChevronDown } from "lucide-react";
 import { Modal } from "../ui/Modal";
 import { Eyebrow } from "../ui/Eyebrow";
 import {
@@ -275,19 +275,22 @@ export function ProjectFormModal({ open, onClose, existing }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <Field label="Activity category">
-            <select
-              value={form.activityCategory}
-              onChange={(e) =>
-                update("activityCategory", e.target.value as ActivityCategory)
-              }
-              className={inputCls}
-            >
-              {CATEGORY_ORDER.map((cat) => (
-                <option key={cat} value={cat}>
-                  {ACTIVITY_CATEGORIES[cat].label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={form.activityCategory}
+                onChange={(e) =>
+                  update("activityCategory", e.target.value as ActivityCategory)
+                }
+                className={`appearance-none pr-8 cursor-pointer ${inputCls}`}
+              >
+                {CATEGORY_ORDER.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {ACTIVITY_CATEGORIES[cat].label}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+            </div>
           </Field>
           <Field label="Weekly goal (minutes)">
             <input

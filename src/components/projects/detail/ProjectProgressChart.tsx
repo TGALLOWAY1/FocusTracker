@@ -1,15 +1,12 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Card, CardHeader } from "../../ui/Card";
 import { useFocusStore } from "../../../state/focusStore";
 import type { Project } from "../../../data/projects";
 
 type Props = {
   project: Project;
-  /** Minimal sparkline variant for inline use inside another card. */
-  compact?: boolean;
 };
 
-const WEEKS = 12;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
 
@@ -30,12 +27,13 @@ function startOfWeek(ms: number): number {
 function bucketByWeek(
   sessions: { endedAt: number; minutes: number }[],
   manuals: { addedAt: number; minutes: number }[],
-  totalTargetMinutes: number
+  totalTargetMinutes: number,
+  weeks: number
 ): Point[] {
   const thisWeekStart = startOfWeek(Date.now());
-  const firstWeekStart = thisWeekStart - (WEEKS - 1) * WEEK_MS;
+  const firstWeekStart = thisWeekStart - (weeks - 1) * WEEK_MS;
 
-  const weeklyMinutes = new Array(WEEKS).fill(0) as number[];
+  const weeklyMinutes = new Array(weeks).fill(0) as number[];
 
   const addToBucket = (at: number, minutes: number) => {
     if (at < firstWeekStart) {
@@ -43,7 +41,7 @@ function bucketByWeek(
       return;
     }
     const idx = Math.floor((startOfWeek(at) - firstWeekStart) / WEEK_MS);
-    if (idx >= 0 && idx < WEEKS) weeklyMinutes[idx] += minutes;
+    if (idx >= 0 && idx < weeks) weeklyMinutes[idx] += minutes;
   };
 
   for (const s of sessions) addToBucket(s.endedAt, s.minutes);
@@ -54,8 +52,8 @@ function bucketByWeek(
   // curve still tells a meaningful "progress over time" story for seed data.
   const orphan = Math.max(0, totalTargetMinutes - totalLogged);
   if (orphan > 0) {
-    const perWeek = orphan / WEEKS;
-    for (let i = 0; i < WEEKS; i += 1) weeklyMinutes[i] += perWeek;
+    const perWeek = orphan / weeks;
+    for (let i = 0; i < weeks; i += 1) weeklyMinutes[i] += perWeek;
   }
 
   let cumulative = 0;
@@ -73,8 +71,10 @@ function bucketByWeek(
   });
 }
 
-export function ProjectProgressChart({ project, compact = false }: Props) {
+export function ProjectProgressChart({ project }: Props) {
   const sessionLog = useFocusStore((s) => s.sessionLog);
+  const [weeks, setWeeks] = useState(12);
+
   const points = useMemo(() => {
     const sessions = sessionLog
       .filter((e) => e.session.projectId === project.id)
@@ -89,16 +89,17 @@ export function ProjectProgressChart({ project, compact = false }: Props) {
     // Use the project's target progress (progressPercent of goal) so even
     // seed-only projects produce a visible curve.
     const totalTarget = Math.round(
-      ((project.weeklyGoalMinutes ?? 600) * WEEKS * project.progressPercent) /
+      ((project.weeklyGoalMinutes ?? 600) * weeks * project.progressPercent) /
         100
     );
-    return bucketByWeek(sessions, manuals, totalTarget);
+    return bucketByWeek(sessions, manuals, totalTarget, weeks);
   }, [
     project.id,
     project.manualEntries,
     project.weeklyGoalMinutes,
     project.progressPercent,
     sessionLog,
+    weeks,
   ]);
 
   const hasAnyActivity =
@@ -106,12 +107,12 @@ export function ProjectProgressChart({ project, compact = false }: Props) {
     (project.manualEntries?.length ?? 0) > 0 ||
     project.progressPercent > 0;
 
-  const W = compact ? 600 : 600;
-  const H = compact ? 60 : 200;
-  const PAD_L = compact ? 2 : 40;
-  const PAD_R = compact ? 2 : 16;
-  const PAD_T = compact ? 4 : 16;
-  const PAD_B = compact ? 4 : 28;
+  const W = 600;
+  const H = 200;
+  const PAD_L = 40;
+  const PAD_R = 16;
+  const PAD_T = 16;
+  const PAD_B = 28;
   const innerW = W - PAD_L - PAD_R;
   const innerH = H - PAD_T - PAD_B;
 
@@ -150,18 +151,15 @@ export function ProjectProgressChart({ project, compact = false }: Props) {
 
   const yTicks = [0, 0.5, 1];
   const labelEvery = Math.ceil(points.length / 5);
-  const gradientId = compact
-    ? "proj-progress-fill-compact"
-    : "proj-progress-fill";
+  const gradientId = "proj-progress-fill";
 
   const svg = hasAnyActivity ? (
     <svg
       viewBox={`0 0 ${W} ${H}`}
       preserveAspectRatio="none"
-      className={compact ? "w-full block" : "w-full h-auto"}
+      className="w-full h-auto"
       role="img"
-      aria-label="Cumulative progress over the last 12 weeks"
-      style={compact ? { height: H } : undefined}
+      aria-label={`Cumulative progress over the last ${weeks} weeks`}
     >
       <defs>
         <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -169,42 +167,41 @@ export function ProjectProgressChart({ project, compact = false }: Props) {
           <stop offset="100%" stopColor="#8B7CF6" stopOpacity="0" />
         </linearGradient>
       </defs>
-      {!compact &&
-        yTicks.map((t) => {
-          const y = PAD_T + innerH - t * innerH;
-          return (
-            <g key={t}>
-              <line
-                x1={PAD_L}
-                x2={PAD_L + innerW}
-                y1={y}
-                y2={y}
-                stroke="#1F2638"
-                strokeWidth={1}
-              />
-              <text
-                x={PAD_L - 8}
-                y={y + 3}
-                textAnchor="end"
-                fontSize={10}
-                fill="#6B7390"
-                className="tabular-nums"
-              >
-                {Math.round(t * maxPercent)}%
-              </text>
-            </g>
-          );
-        })}
+      {yTicks.map((t) => {
+        const y = PAD_T + innerH - t * innerH;
+        return (
+          <g key={t}>
+            <line
+              x1={PAD_L}
+              x2={PAD_L + innerW}
+              y1={y}
+              y2={y}
+              stroke="#1F2638"
+              strokeWidth={1}
+            />
+            <text
+              x={PAD_L - 8}
+              y={y + 3}
+              textAnchor="end"
+              fontSize={10}
+              fill="#6B7390"
+              className="tabular-nums"
+            >
+              {Math.round(t * maxPercent)}%
+            </text>
+          </g>
+        );
+      })}
       <path d={areaPath} fill={`url(#${gradientId})`} />
       <path
         d={linePath}
         fill="none"
         stroke="#8B7CF6"
-        strokeWidth={compact ? 1.5 : 2}
+        strokeWidth={2}
         strokeLinejoin="round"
         strokeLinecap="round"
       />
-      {!compact && points.length > 0 && (
+      {points.length > 0 && (
         <circle
           cx={xForIndex(points.length - 1)}
           cy={yForMinutes(points[points.length - 1].cumulativeMinutes)}
@@ -214,47 +211,38 @@ export function ProjectProgressChart({ project, compact = false }: Props) {
           strokeWidth={2}
         />
       )}
-      {!compact &&
-        points.map((p, i) =>
-          i % labelEvery === 0 || i === points.length - 1 ? (
-            <text
-              key={p.weekStart}
-              x={xForIndex(i)}
-              y={H - 8}
-              textAnchor="middle"
-              fontSize={10}
-              fill="#6B7390"
-            >
-              {p.label}
-            </text>
-          ) : null
-        )}
+      {points.map((p, i) =>
+        i % labelEvery === 0 || i === points.length - 1 ? (
+          <text
+            key={p.weekStart}
+            x={xForIndex(i)}
+            y={H - 8}
+            textAnchor="middle"
+            fontSize={10}
+            fill="#6B7390"
+          >
+            {p.label}
+          </text>
+        ) : null
+      )}
     </svg>
   ) : null;
-
-  if (compact) {
-    return (
-      <div className="w-full">
-        {hasAnyActivity ? (
-          svg
-        ) : (
-          <div className="h-12 flex items-center justify-center text-xs text-text-muted">
-            No activity yet
-          </div>
-        )}
-      </div>
-    );
-  }
 
   return (
     <Card>
       <CardHeader
         title="Progress Over Time"
-        subtitle="Cumulative focus time across the last 12 weeks"
+        subtitle={`Cumulative focus time across the last ${weeks} weeks`}
         trailing={
-          <span className="text-[11px] text-text-muted uppercase tracking-wider">
-            This Quarter
-          </span>
+          <select
+            value={weeks}
+            onChange={(e) => setWeeks(Number(e.target.value))}
+            className="bg-bg-elevated border border-border-subtle rounded px-2 py-1 text-xs text-text-primary outline-none focus:border-brand-purple/50"
+          >
+            <option value={4}>4 Weeks</option>
+            <option value={12}>12 Weeks</option>
+            <option value={24}>24 Weeks</option>
+          </select>
         }
       />
       <div className="mt-4">
