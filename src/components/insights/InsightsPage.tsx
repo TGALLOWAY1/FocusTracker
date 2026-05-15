@@ -12,7 +12,7 @@ import { InsightsFiltersBar } from "./InsightsFilters";
 import { SessionsFeed } from "./SessionsFeed";
 import { CategoryDonutPanel } from "./CategoryDonutPanel";
 import { CategoryTrendPanel } from "./CategoryTrendPanel";
-import { QuickFiltersPanel } from "./QuickFiltersPanel";
+
 import { InsightsEmptyState } from "./InsightsEmptyState";
 import { useUIStore } from "../../state/uiStore";
 import { PanelRightClose } from "lucide-react";
@@ -148,10 +148,7 @@ export function InsightsPage() {
             totalMinutes={data.summary.totalMinutes}
           />
           <CategoryTrendPanel trend={data.trend} />
-          <QuickFiltersPanel
-            active={filters.quickFilter}
-            onChange={(quickFilter) => setFilters({ ...filters, quickFilter })}
-          />
+
         </aside>
       )}
     </>

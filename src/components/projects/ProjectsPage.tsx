@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Folder, LayoutGrid, List, Plus } from "lucide-react";
+import { Folder, LayoutGrid, List, Plus, ChevronDown } from "lucide-react";
 import { useProjectStore } from "../../state/projectStore";
 import { useAllProjectStats, sortProjects } from "../../state/useProjectStats";
 import type { Project, ProjectStatus } from "../../data/projects";
@@ -11,7 +11,7 @@ import { ProjectListRow } from "./ProjectListRow";
 import { ProjectFormModal } from "./ProjectFormModal";
 import { LogManualTimeModal } from "./LogManualTimeModal";
 import { ProjectFocusDonutPanel } from "./ProjectFocusDonutPanel";
-import { ProjectsQuickFiltersPanel } from "./ProjectsQuickFiltersPanel";
+
 import { StayConsistentPanel } from "./StayConsistentPanel";
 import { useUIStore } from "../../state/uiStore";
 import { PanelRightClose } from "lucide-react";
@@ -96,20 +96,20 @@ function Heading({
           </button>
         </div>
 
-        <label className="sr-only" htmlFor="projects-sort">
-          Sort
-        </label>
-        <select
-          id="projects-sort"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as ProjectsSort)}
-          className="bg-bg-card border border-border-subtle text-text-primary text-sm rounded-xl px-3 h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60"
-        >
-          <option value="recent">Recent</option>
-          <option value="name">Name</option>
-          <option value="progress">Progress</option>
-          <option value="focusTime">Focus Time</option>
-        </select>
+        <div className="relative">
+          <select
+            id="projects-sort"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as ProjectsSort)}
+            className="appearance-none pr-8 bg-bg-card border border-border-subtle text-text-primary text-sm rounded-xl pl-3 h-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple/60 cursor-pointer"
+          >
+            <option value="recent">Recent</option>
+            <option value="name">Name</option>
+            <option value="progress">Progress</option>
+            <option value="focusTime">Focus Time</option>
+          </select>
+          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none" />
+        </div>
 
         <button
           type="button"
@@ -251,11 +251,7 @@ export function ProjectsPage() {
             <PanelRightClose size={16} />
           </button>
           <ProjectFocusDonutPanel projects={projects} stats={stats} />
-          <ProjectsQuickFiltersPanel
-            projects={projects}
-            active={statusFilter}
-            onChange={setStatusFilter}
-          />
+
           <StayConsistentPanel />
         </aside>
       )}

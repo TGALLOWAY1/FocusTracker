@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Sunrise, Sparkles } from "lucide-react";
 import { FocusSessionCard } from "../dashboard/FocusSessionCard";
-import { IdeaParkingLot } from "../dashboard/IdeaParkingLot";
+import { ActiveProjectsPanel } from "../dashboard/ActiveProjectsPanel";
 import { PlanMyDayModal } from "../dashboard/PlanMyDayModal";
 import { SessionReflectionModal } from "../dashboard/SessionReflectionModal";
 
@@ -44,7 +44,7 @@ export function MainContent() {
         <FocusSessionCard />
       </div>
       <div className="mt-3">
-        <IdeaParkingLot />
+        <ActiveProjectsPanel />
       </div>
       <PlanMyDayModal open={planOpen} onClose={() => setPlanOpen(false)} />
       <SessionReflectionModal />

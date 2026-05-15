@@ -1,6 +1,6 @@
 import { FocusLadderPanel } from "../dashboard/FocusLadderPanel";
 import { FocusStatsPanel } from "../dashboard/FocusStatsPanel";
-import { ActiveProjectsPanel } from "../dashboard/ActiveProjectsPanel";
+import { IdeaParkingLot } from "../dashboard/IdeaParkingLot";
 import { useWeeklyStats } from "../../state/useWeeklyStats";
 import { useUIStore } from "../../state/uiStore";
 import { PanelRightClose } from "lucide-react";
@@ -20,7 +20,7 @@ export function RightPanel() {
       </button>
       <FocusLadderPanel />
       <FocusStatsPanel data={weeklyStats} />
-      <ActiveProjectsPanel />
+      <IdeaParkingLot />
     </aside>
   );
 }

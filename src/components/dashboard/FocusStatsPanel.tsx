@@ -1,4 +1,4 @@
-import { ChevronDown } from "lucide-react";
+
 import { Card, CardHeader } from "../ui/Card";
 import { SummaryStrip, type SummaryItem } from "../ui/SummaryStrip";
 import type { DayStat, FocusStatsData } from "../../data/focusStats";
@@ -92,9 +92,8 @@ function WeeklyBarChart({ daily, maxYHours }: WeeklyBarChartProps) {
 
 function RangeIndicator() {
   return (
-    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs text-text-secondary bg-bg-elevated">
+    <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium text-text-secondary bg-bg-elevated">
       This Week
-      <ChevronDown size={12} className="text-text-muted" />
     </span>
   );
 }

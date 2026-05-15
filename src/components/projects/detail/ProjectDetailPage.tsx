@@ -31,6 +31,7 @@ import { ProjectLinksCard } from "./ProjectLinksCard";
 import { ProjectSessionsPanel } from "./ProjectSessionsPanel";
 import { ProjectNotesPanel } from "./ProjectNotesPanel";
 import { CurrentFocusCard } from "./CurrentFocusCard";
+import { ProjectProgressChart } from "./ProjectProgressChart";
 import { useUIStore } from "../../../state/uiStore";
 import { PanelRightClose } from "lucide-react";
 
@@ -254,6 +255,8 @@ export function ProjectDetailPage() {
               </>
             )}
           </Card>
+
+          <ProjectProgressChart project={project} />
 
           <ActivityFeedCard entries={activityEntries} />
 
