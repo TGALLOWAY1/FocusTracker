@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { computeInsights } from "./useInsightsData";
+import { computeInsights, computeTaskBreakdown } from "./useInsightsData";
 import type {
   CompletedSession,
   LoggedSession,
   SessionReflection,
+  TaskRecord,
 } from "./focusStore";
 import type { ActivityCategory } from "../data/activityCategories";
 
@@ -17,6 +18,7 @@ type MakeSessionInput = {
   focusLevel?: number;
   energyLevel?: number;
   completedPlanned?: boolean;
+  taskRecords?: TaskRecord[];
 };
 
 function makeSession(input: MakeSessionInput): LoggedSession {
@@ -34,6 +36,7 @@ function makeSession(input: MakeSessionInput): LoggedSession {
     activityCategory: input.category ?? "coding",
     sessionType: input.sessionType ?? "light",
     tags: [],
+    taskRecords: input.taskRecords ?? [],
   };
   // A session has a reflection only if at least one rating-like field is
   // provided. Defaults keep existing tests' behavior unchanged.
@@ -51,6 +54,20 @@ function makeSession(input: MakeSessionInput): LoggedSession {
       }
     : null;
   return { session, reflection };
+}
+
+function makeTask(
+  id: string,
+  durationSec: number | null,
+  tag: string | null
+): TaskRecord {
+  return {
+    id,
+    text: `task-${id}`,
+    completedAt: durationSec == null ? null : 1,
+    durationSec,
+    tag,
+  };
 }
 
 // Wednesday 2024-11-13 12:00 local — same anchor as useWeeklyStats.test
@@ -78,6 +95,7 @@ describe("computeInsights", () => {
       completedPlannedRate: 0,
     });
     expect(data.byCategory).toEqual([]);
+    expect(data.taskBreakdown).toEqual([]);
     expect(data.trend.points).toHaveLength(7);
     expect(data.trend.series).toEqual([]);
     expect(data.trend.maxHours).toBe(1);
@@ -284,5 +302,55 @@ describe("computeInsights", () => {
       REF_NOW
     );
     expect(data.sessions.map((s) => s.session.endedAt)).toEqual([WED, MON]);
+  });
+});
+
+describe("computeTaskBreakdown", () => {
+  it("returns an empty array when there are no timed tasks", () => {
+    expect(computeTaskBreakdown([])).toEqual([]);
+  });
+
+  it("groups task time by tag, sorts by minutes desc, computes percent", () => {
+    const sessions = [
+      makeSession({
+        endedAt: WED,
+        durationMin: 60,
+        taskRecords: [
+          makeTask("1", 1800, "Mixing"),
+          makeTask("2", 600, "Arrangement"),
+        ],
+      }),
+      makeSession({
+        endedAt: MON,
+        durationMin: 60,
+        taskRecords: [makeTask("3", 600, "Mixing")],
+      }),
+    ];
+    const result = computeTaskBreakdown(sessions);
+    expect(result).toHaveLength(2);
+    expect(result[0]).toMatchObject({
+      tag: "Mixing",
+      minutes: 40,
+      taskCount: 2,
+    });
+    expect(result[0].percent).toBeCloseTo(2400 / 3000, 5);
+    expect(result[1]).toMatchObject({ tag: "Arrangement", minutes: 10 });
+  });
+
+  it("buckets untagged tasks under 'Untagged' and skips blank durations", () => {
+    const sessions = [
+      makeSession({
+        endedAt: WED,
+        durationMin: 60,
+        taskRecords: [makeTask("1", 1200, null), makeTask("2", null, "Mixing")],
+      }),
+    ];
+    const result = computeTaskBreakdown(sessions);
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      tag: "Untagged",
+      minutes: 20,
+      taskCount: 1,
+    });
   });
 });

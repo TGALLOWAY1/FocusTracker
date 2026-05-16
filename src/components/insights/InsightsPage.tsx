@@ -12,6 +12,7 @@ import { InsightsFiltersBar } from "./InsightsFilters";
 import { SessionsFeed } from "./SessionsFeed";
 import { CategoryDonutPanel } from "./CategoryDonutPanel";
 import { CategoryTrendPanel } from "./CategoryTrendPanel";
+import { TaskBreakdownPanel } from "./TaskBreakdownPanel";
 
 import { InsightsEmptyState } from "./InsightsEmptyState";
 import { useUIStore } from "../../state/uiStore";
@@ -148,7 +149,7 @@ export function InsightsPage() {
             totalMinutes={data.summary.totalMinutes}
           />
           <CategoryTrendPanel trend={data.trend} />
-
+          <TaskBreakdownPanel slices={data.taskBreakdown} />
         </aside>
       )}
     </>

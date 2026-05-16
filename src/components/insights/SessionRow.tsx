@@ -1,9 +1,20 @@
-import { CheckCircle2, AlertCircle, Star, Zap, Target, Trash2 } from "lucide-react";
+import { useState } from "react";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Star,
+  Zap,
+  Target,
+  Trash2,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { useProjectStore } from "../../state/projectStore";
 import { PROJECT_ICONS, projectColorClasses } from "../../data/projects";
 import { ACTIVITY_CATEGORIES } from "../../data/activityCategories";
 import { formatHM } from "../../utils/time";
 import { useFocusStore, type LoggedSession } from "../../state/focusStore";
+import { SessionTaskBreakdown } from "./SessionTaskBreakdown";
 
 function formatTimeOfDay(ts: number): string {
   const d = new Date(ts);
@@ -74,8 +85,10 @@ function TagChip({ label, tone }: { label: string; tone: "category" | "neutral" 
 
 export function SessionRow({ entry }: { entry: LoggedSession }) {
   const { session, reflection } = entry;
+  const [expanded, setExpanded] = useState(false);
   const projects = useProjectStore((s) => s.projects);
   const project = projects.find((p) => p.id === session.projectId);
+  const taskCount = session.taskRecords.length;
 
   const colors = project
     ? projectColorClasses(project.color)
@@ -174,12 +187,35 @@ export function SessionRow({ entry }: { entry: LoggedSession }) {
             .map((tag) => (
               <TagChip key={tag} label={tag} tone="neutral" />
             ))}
+
+          {taskCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              aria-expanded={expanded}
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-bg-elevated text-text-secondary hover:text-text-primary transition-colors"
+            >
+              {expanded ? (
+                <ChevronDown size={11} strokeWidth={2.5} />
+              ) : (
+                <ChevronRight size={11} strokeWidth={2.5} />
+              )}
+              {taskCount} task{taskCount === 1 ? "" : "s"}
+            </button>
+          )}
         </div>
 
         {reflection?.reflection && (
           <p className="mt-2.5 text-xs text-text-secondary italic leading-relaxed line-clamp-2">
             “{reflection.reflection}”
           </p>
+        )}
+
+        {expanded && taskCount > 0 && (
+          <SessionTaskBreakdown
+            sessionId={session.id}
+            records={session.taskRecords}
+          />
         )}
       </div>
     </article>

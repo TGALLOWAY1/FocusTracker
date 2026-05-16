@@ -43,6 +43,7 @@ function makeSession(
     activityCategory: "other",
     sessionType: "light",
     tags: [],
+    taskRecords: [],
   };
 }
 
@@ -302,6 +303,104 @@ describe("focusStore", () => {
       expect(state.sessionLog).toEqual(beforeRefresh);
       expect(state.sessionLog).toHaveLength(1);
       expect(state.sessionLog[0].reflection).toBeNull();
+    });
+  });
+
+  describe("task timing", () => {
+    it("start() records a wall-clock startedAt", () => {
+      useFocusStore.setState({ startedAt: null });
+      useFocusStore.getState().start();
+      expect(typeof useFocusStore.getState().startedAt).toBe("number");
+    });
+
+    it("toggleTodo timestamps a todo on check and clears it on uncheck", () => {
+      useFocusStore.setState({
+        todos: [{ id: "t1", text: "Task 1", done: false, completedAt: null }],
+      });
+      useFocusStore.getState().toggleTodo("t1");
+      let todo = useFocusStore.getState().todos[0];
+      expect(todo.done).toBe(true);
+      expect(typeof todo.completedAt).toBe("number");
+
+      useFocusStore.getState().toggleTodo("t1");
+      todo = useFocusStore.getState().todos[0];
+      expect(todo.done).toBe(false);
+      expect(todo.completedAt).toBeNull();
+    });
+
+    it("end() snapshots todos into taskRecords with gap-based durations", () => {
+      const start = 1_000_000;
+      useFocusStore.setState({
+        status: "running",
+        startedAt: start,
+        durationSec: 600,
+        remainingSec: 0,
+        sessionLog: [],
+        pendingReflectionFor: null,
+        todos: [
+          { id: "a", text: "A", done: true, completedAt: start + 60_000 },
+          { id: "b", text: "B", done: true, completedAt: start + 200_000 },
+          { id: "c", text: "C", done: false, completedAt: null },
+        ],
+      });
+      useFocusStore.getState().end();
+      const records =
+        useFocusStore.getState().sessionLog[0].session.taskRecords;
+      expect(records).toHaveLength(3);
+      expect(records[0]).toMatchObject({ id: "a", durationSec: 60, tag: null });
+      // b: 200s after start − 60s spent on a = 140s gap.
+      expect(records[1]).toMatchObject({ id: "b", durationSec: 140 });
+      expect(records[2]).toMatchObject({
+        id: "c",
+        durationSec: null,
+        completedAt: null,
+      });
+    });
+
+    it("derives task durations by checkoff order, not list order", () => {
+      const start = 2_000_000;
+      useFocusStore.setState({
+        status: "running",
+        startedAt: start,
+        durationSec: 600,
+        remainingSec: 0,
+        sessionLog: [],
+        pendingReflectionFor: null,
+        todos: [
+          { id: "a", text: "A", done: true, completedAt: start + 300_000 },
+          { id: "b", text: "B", done: true, completedAt: start + 100_000 },
+        ],
+      });
+      useFocusStore.getState().end();
+      const records =
+        useFocusStore.getState().sessionLog[0].session.taskRecords;
+      const a = records.find((r) => r.id === "a")!;
+      const b = records.find((r) => r.id === "b")!;
+      // b checked first: 100s from start. a checked second: 200s gap from b.
+      expect(b.durationSec).toBe(100);
+      expect(a.durationSec).toBe(200);
+    });
+
+    it("updateTaskRecord patches duration and tag on a logged session", () => {
+      useFocusStore.setState({
+        status: "running",
+        startedAt: 3_000_000,
+        durationSec: 600,
+        remainingSec: 0,
+        sessionLog: [],
+        pendingReflectionFor: null,
+        todos: [{ id: "x", text: "X", done: false, completedAt: null }],
+      });
+      useFocusStore.getState().end();
+      const sessionId = useFocusStore.getState().sessionLog[0].session.id;
+
+      useFocusStore
+        .getState()
+        .updateTaskRecord(sessionId, "x", { durationSec: 1800, tag: "Mixing" });
+      const record =
+        useFocusStore.getState().sessionLog[0].session.taskRecords[0];
+      expect(record.durationSec).toBe(1800);
+      expect(record.tag).toBe("Mixing");
     });
   });
 });

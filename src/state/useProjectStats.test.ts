@@ -26,6 +26,7 @@ function makeSession(
     activityCategory: "coding",
     sessionType: "light",
     tags: [],
+    taskRecords: [],
   };
   const reflection: SessionReflection | null = null;
   return { session, reflection };

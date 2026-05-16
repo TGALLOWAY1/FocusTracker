@@ -180,7 +180,7 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newTodo.trim()) {
                     e.preventDefault();
-                    setTodos([...todos, { id: newId("todo"), text: newTodo.trim(), done: false }]);
+                    setTodos([...todos, { id: newId("todo"), text: newTodo.trim(), done: false, completedAt: null }]);
                     setNewTodo("");
                   }
                 }}
@@ -191,7 +191,7 @@ export function PlanMyDayModal({ open, onClose }: PlanMyDayModalProps) {
                 type="button"
                 onClick={() => {
                   if (newTodo.trim()) {
-                    setTodos([...todos, { id: newId("todo"), text: newTodo.trim(), done: false }]);
+                    setTodos([...todos, { id: newId("todo"), text: newTodo.trim(), done: false, completedAt: null }]);
                     setNewTodo("");
                   }
                 }}
